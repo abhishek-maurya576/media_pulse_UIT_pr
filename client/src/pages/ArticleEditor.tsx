@@ -55,6 +55,7 @@ export default function ArticleEditor() {
   const [highlightInput, setHighlightInput] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
 
   const { data: existingArticle } = useQuery({
     queryKey: ['article', articleId],
@@ -98,10 +99,28 @@ export default function ArticleEditor() {
 
   const createMutation = useMutation({
     mutationFn: (data: ArticleCreate) => articleApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['edition-articles', editionId || form.edition] });
-      queryClient.invalidateQueries({ queryKey: ['edition', editionId || form.edition] });
-      toast.success('Article created!');
+    onSuccess: async (createdArticle) => {
+      const targetEdition = editionId || form.edition;
+
+      // Chain pending image upload if user attached a file during creation
+      if (pendingImageFile) {
+        try {
+          await articleApi.uploadImage(createdArticle.id, pendingImageFile);
+          // Also persist image_caption if provided
+          if (form.image_caption.trim()) {
+            await articleApi.update(createdArticle.id, { image_caption: form.image_caption });
+          }
+          toast.success('Article created with image!');
+        } catch {
+          toast.success('Article created, but image upload failed. You can re-attach it.');
+        }
+        setPendingImageFile(null);
+      } else {
+        toast.success('Article created!');
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['edition-articles', targetEdition] });
+      queryClient.invalidateQueries({ queryKey: ['edition', targetEdition] });
       navigate(editionId ? `/editions/${editionId}` : '/dashboard/articles');
     },
     onError: () => toast.error('Failed to create article'),
@@ -204,7 +223,10 @@ export default function ArticleEditor() {
       return;
     }
     setImagePreview(URL.createObjectURL(file));
-    if (!isNew) {
+    if (isNew) {
+      // Store file — will be uploaded after article creation
+      setPendingImageFile(file);
+    } else {
       uploadImageMutation.mutate(file);
     }
   };
@@ -493,9 +515,28 @@ export default function ArticleEditor() {
                     <Loader size={12} className="animate-spin" /> Uploading...
                   </div>
                 )}
-                {!isNew && form.image && (
+                {isNew && pendingImageFile && (
+                  <div style={{
+                    padding: '4px 10px',
+                    background: 'rgba(0,0,0,0.7)',
+                    borderRadius: CONFIG.radius.sm,
+                    fontSize: '0.7rem',
+                    color: CONFIG.colors.accent,
+                    fontWeight: 600,
+                  }}>
+                    Will upload on save
+                  </div>
+                )}
+                {(isNew ? !!pendingImageFile : !!form.image) && (
                   <button
-                    onClick={() => removeImageMutation.mutate()}
+                    onClick={() => {
+                      if (isNew) {
+                        setPendingImageFile(null);
+                        setImagePreview(null);
+                      } else {
+                        removeImageMutation.mutate();
+                      }
+                    }}
                     style={{
                       width: 28,
                       height: 28,

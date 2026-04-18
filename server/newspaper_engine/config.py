@@ -40,8 +40,8 @@ COLUMN_RULE_WIDTH = 0.4  # pt — thin vertical separator
 
 # ─── Masthead Dimensions ─────────────────────────────────────────
 
-MASTHEAD_HEIGHT = 62.0   # pt — compact masthead (< 12% of page)
-SUBHEADER_HEIGHT = 16.0  # pt — minimal inner page header
+MASTHEAD_HEIGHT = 130.0  # pt — tall Hindi masthead (बी.आर.टाइम्स style)
+SUBHEADER_HEIGHT = 22.0  # pt — category section header on inner pages
 
 
 # ─── Font Metrics (dense newspaper) ──────────────────────────────

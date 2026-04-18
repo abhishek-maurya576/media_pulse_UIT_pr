@@ -6,8 +6,9 @@ from .models import Edition, Article, Category, Template, PDFGenerationJob
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'display_order']
-    ordering = ['display_order']
+    list_display = ['name', 'display_order', 'page_number']
+    list_editable = ['display_order', 'page_number']
+    ordering = ['page_number', 'display_order']
 
 
 class ArticleInline(admin.TabularInline):

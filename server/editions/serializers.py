@@ -7,7 +7,8 @@ from .models import Edition, Article, Category, Template, PDFGenerationJob
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'name', 'display_order']
+        fields = ['id', 'name', 'display_order', 'page_number']
+
 
 
 class ArticleSerializer(serializers.ModelSerializer):
@@ -70,6 +71,7 @@ class EditionSerializer(serializers.ModelSerializer):
             'id', 'name', 'newspaper_name', 'edition_number',
             'publication_date', 'page_size', 'layout_mode',
             'style_preset', 'status', 'generated_pdf',
+            'chief_editor', 'inspiration_source',
             'article_count', 'created_by', 'created_by_name', 'is_owner',
             'created_at', 'updated_at',
         ]

@@ -71,6 +71,8 @@ export interface Edition {
   style_preset: string;
   status: string;
   generated_pdf: string | null;
+  chief_editor: string;
+  inspiration_source: string;
   article_count: number;
   created_by: string | null;
   created_by_name: string;
@@ -86,6 +88,8 @@ export interface EditionCreate {
   page_size: string;
   layout_mode: string;
   style_preset: string;
+  chief_editor: string;
+  inspiration_source: string;
 }
 
 export interface Article {
@@ -137,13 +141,14 @@ export interface Category {
   id: number;
   name: string;
   display_order: number;
+  page_number: number;
 }
 
 export interface Template {
-  id: number;
+  id: string;
   name: string;
   description: string;
-  layout_definition: any;
+  layout_definition: Record<string, any>;
   is_active: boolean;
 }
 
@@ -269,7 +274,8 @@ export const categoryApi = {
 // ─── Template API ───
 export const templateApi = {
   list: () => api.get<PaginatedResponse<Template>>('/templates/').then(r => r.data),
-  get: (id: number) => api.get<Template>(`/templates/${id}/`).then(r => r.data),
+  get: (id: string) => api.get<Template>(`/templates/${id}/`).then(r => r.data),
+  update: (id: string, data: Partial<Template>) => api.patch<Template>(`/templates/${id}/`, data).then(r => r.data),
 };
 
 // ─── Blog API ───

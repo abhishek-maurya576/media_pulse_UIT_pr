@@ -209,6 +209,6 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
 class TemplateViewSet(viewsets.ModelViewSet):
     """Templates: authenticated read, Admin+ write."""
-    queryset = Template.objects.filter(is_active=True)
+    queryset = Template.objects.all()
     serializer_class = TemplateSerializer
     permission_classes = [IsAuthenticated, ReadAllWriteAdmin]

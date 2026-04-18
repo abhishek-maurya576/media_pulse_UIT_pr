@@ -87,13 +87,18 @@ class Category(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
     display_order = models.PositiveIntegerField(default=0, db_index=True)
+    page_number = models.PositiveIntegerField(
+        default=0,
+        db_index=True,
+        help_text='PDF page number for this category (0 = auto-place)',
+    )
 
     class Meta:
         verbose_name_plural = 'Categories'
-        ordering = ['display_order', 'name']
+        ordering = ['page_number', 'display_order', 'name']
 
     def __str__(self):
-        return self.name
+        return f"{self.name} (p.{self.page_number})" if self.page_number else self.name
 
 
 class Edition(BaseModel):
@@ -127,6 +132,16 @@ class Edition(BaseModel):
         upload_to='editions/pdfs/',
         null=True,
         blank=True,
+    )
+    chief_editor = models.CharField(
+        max_length=200,
+        default='बलराम दीक्षित',
+        help_text='प्रधान सम्पादक name for masthead',
+    )
+    inspiration_source = models.CharField(
+        max_length=200,
+        default='स्व0 सूर्यनारायण त्रिपाठी',
+        help_text='प्रेरणा स्रोत name for masthead',
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

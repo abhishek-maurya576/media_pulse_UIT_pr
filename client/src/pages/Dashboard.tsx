@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { editionApi, type Edition, type EditionCreate } from '../api/client';
+import { editionApi, templateApi, type Edition, type EditionCreate } from '../api/client';
 import { CONFIG } from '../config';
 import toast from 'react-hot-toast';
 import {
@@ -214,13 +214,38 @@ function CreateEditionModal({ onClose }: { onClose: () => void }) {
 
   const [form, setForm] = useState<EditionCreate>({
     name: '',
-    newspaper_name: 'Media Puls',
+    newspaper_name: 'बी.आर.टाइम्स',
     edition_number: 1,
     publication_date: new Date().toISOString().split('T')[0],
     page_size: 'TABLOID',
     layout_mode: 'FIXED_TEMPLATE',
     style_preset: 'DEFAULT',
+    chief_editor: 'बलराम दीक्षित',
+    inspiration_source: 'स्व0 सूर्यनारायण त्रिपाठी',
   });
+
+  // Fetch active template to auto-set style_preset
+  const { data: templatesResp } = useQuery({
+    queryKey: ['templates'],
+    queryFn: templateApi.list,
+  });
+
+  const allTemplates = templatesResp?.results || [];
+  const activeTemplate = allTemplates.find(t => t.is_active);
+  const activePreset = activeTemplate?.layout_definition?.style_preset || 'DEFAULT';
+
+  // Auto-set style_preset from active template on first load
+  React.useEffect(() => {
+    if (activeTemplate) {
+      setForm(prev => ({ ...prev, style_preset: activePreset }));
+    }
+  }, [activePreset]);
+
+  const PRESET_COLORS: Record<string, string> = {
+    DEFAULT: '#C1121F',
+    CLASSIC: '#8B0000',
+    MODERN: '#E63946',
+  };
 
   const mutation = useMutation({
     mutationFn: editionApi.create,
@@ -291,13 +316,79 @@ function CreateEditionModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
+        {/* Masthead fields */}
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">प्रधान सम्पादक (Chief Editor)</label>
+            <input className="input" value={form.chief_editor} onChange={e => update('chief_editor', e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">प्रेरणा स्रोत (Inspiration Source)</label>
+            <input className="input" value={form.inspiration_source} onChange={e => update('inspiration_source', e.target.value)} />
+          </div>
+        </div>
+
+        {/* Template / Style Preset — driven by templates */}
         <div className="form-group">
-          <label className="form-label">Style Preset</label>
-          <select className="input" value={form.style_preset} onChange={e => update('style_preset', e.target.value)}>
-            {Object.entries(CONFIG.stylePresets).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
+          <label className="form-label">Template (Style Preset)</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <select
+              className="input"
+              style={{ flex: 1 }}
+              value={form.style_preset}
+              onChange={e => update('style_preset', e.target.value)}
+            >
+              {allTemplates.length > 0 ? (
+                allTemplates.map(t => {
+                  const preset = t.layout_definition?.style_preset || 'DEFAULT';
+                  return (
+                    <option key={t.id} value={preset}>
+                      {t.name} ({preset})
+                    </option>
+                  );
+                })
+              ) : (
+                Object.entries(CONFIG.stylePresets).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))
+              )}
+            </select>
+            <div style={{
+              width: 18, height: 18, borderRadius: 4,
+              background: PRESET_COLORS[form.style_preset] || '#C1121F',
+              border: '1px solid var(--color-border)',
+              flexShrink: 0,
+            }} />
+          </div>
+          <div style={{
+            marginTop: 6, fontSize: '0.72rem',
+            color: 'var(--color-text-muted)',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            {activeTemplate && (
+              <>
+                <div style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: CONFIG.colors.success,
+                }} />
+                Active: <strong>{activeTemplate.name}</strong>
+                {form.style_preset !== activePreset && (
+                  <span style={{ color: CONFIG.colors.warning }}>(overridden)</span>
+                )}
+                <span style={{ color: 'var(--color-text-dim)' }}>|</span>
+              </>
+            )}
+            <button
+              onClick={() => { onClose(); navigate('/dashboard/templates'); }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: CONFIG.colors.accent, fontSize: '0.72rem',
+                textDecoration: 'underline', padding: 0,
+              }}
+            >
+              Manage Templates
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 24 }}>

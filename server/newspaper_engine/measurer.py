@@ -76,9 +76,9 @@ def measure_article(article, column_width: float, is_hero: bool = False) -> Arti
     if getattr(article, 'image', None):
         m.image = _measure_image(article, column_width, is_hero)
         m.image += config.IMAGE_MARGIN_BOTTOM
-        # For non-hero, apply float height factor
-        if not is_hero:
-            m.image *= config.FLOAT_HEIGHT_FACTOR
+        # Images are floated (inline) for all priorities, so text wraps
+        # beside them — apply float height reduction factor
+        m.image *= config.FLOAT_HEIGHT_FACTOR
 
     # Highlights box — floated in standard articles, shares space with text
     highlights = getattr(article, 'highlights', None) or []

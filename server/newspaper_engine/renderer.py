@@ -86,8 +86,15 @@ def render_pages(pages: List[PageComposition], page_size: str) -> List[dict]:
 
 
 def _render_hero_placement(placement: PlacedArticle, content_width: float) -> dict:
-    """Hero articles: block images centered, no float wrapping."""
+    """Hero articles: float image inline so text wraps around it."""
     article = placement.article
+    has_image = bool(getattr(article, 'image', None))
+
+    # Hero images float right so the body text wraps on the left
+    image_wrap_mode = 'float' if has_image else 'none'
+    image_float = 'right' if has_image else 'none'
+    image_width_pct = round(config.HERO_IMAGE_WIDTH_RATIO * 100)
+
     return {
         'article': article,
         'y_offset': placement.y_offset,
@@ -96,8 +103,9 @@ def _render_hero_placement(placement: PlacedArticle, content_width: float) -> di
         'is_continuation': placement.is_continuation,
         'continued_on_page': placement.continued_on_page,
         'continued_from_page': placement.continued_from_page,
-        'image_width_pct': config.HERO_IMAGE_WIDTH_RATIO * 100,
-        'image_wrap_mode': 'block',  # hero images stay block/centered
+        'image_width_pct': image_width_pct,
+        'image_wrap_mode': image_wrap_mode,
+        'image_float': image_float,
     }
 
 
