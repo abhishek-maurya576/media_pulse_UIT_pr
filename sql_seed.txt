@@ -1,0 +1,51 @@
+CREATE TABLE IF NOT EXISTS reserved_usernames (
+    username VARCHAR(50) PRIMARY KEY,
+    category VARCHAR(30)
+);
+
+INSERT INTO reserved_usernames (username, category) VALUES
+('admin','core'),('administrator','core'),('superadmin','core'),('root','core'),
+('system','system'),('server','system'),('backend','system'),('core','system'),
+
+('support','support'),('help','support'),('contact','support'),
+('feedback','support'),('info','support'),
+
+('security','security'),('auth','security'),('login','security'),
+('signup','security'),('register','security'),
+
+('moderator','roles'),('mod','roles'),('staff','roles'),
+('team','roles'),('manager','roles'),
+
+('owner','roles'),('founder','roles'),('ceo','roles'),
+('cto','roles'),('cfo','roles'),
+
+('api','technical'),('status','technical'),('logs','technical'),
+('monitor','technical'),
+
+('mail','communication'),('email','communication'),
+('noreply','communication'),('notifications','communication'),
+
+('bot','system'),('chatbot','system'),('systembot','system'),
+
+('test','testing'),('demo','testing'),('sample','testing'),
+('dummy','testing'),
+
+('dashboard','ui'),('panel','ui'),('console','ui'),
+
+('user','generic'),('users','generic'),('account','generic'),
+
+('spam','abuse'),('fake','abuse'),('scam','abuse'),
+
+('google','brand'),('facebook','brand'),('instagram','brand'),
+('twitter','brand'),('youtube','brand'),
+
+('mediapulse','brand'),('mediapulseadmin','brand'),
+
+('admin1','core'),('admin123','core'),
+('root123','core'),('system123','system'),
+
+('official','brand'),('official1','brand'),
+
+('support1','support'),('support123','support'),
+
+('team1','roles'),('team123','roles');

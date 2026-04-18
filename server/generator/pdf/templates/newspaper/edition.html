@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ edition.newspaper_name }} — Edition #{{ edition.edition_number }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Page Setup ─── */
+    @page {
+      size: {{ page_dim.width }} {{ page_dim.height }};
+      margin: 0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Libre Baskerville', Georgia, serif;
+      font-size: 9.5pt;
+      line-height: 1.55;
+      color: #1a1a1a;
+      background: #FDFAF2;
+    }
+
+    /* ─── Page Container ─── */
+    .newspaper-page {
+      page-break-after: always;
+      width: 100%;
+      padding: 0.5in 0.6in;
+      min-height: 100vh;
+      position: relative;
+      background: #FDFAF2;
+    }
+    .newspaper-page:last-child {
+      page-break-after: avoid;
+    }
+
+    /* ─── Masthead ─── */
+    .masthead {
+      text-align: center;
+      padding-bottom: 12pt;
+      margin-bottom: 14pt;
+    }
+    .masthead-top-rule {
+      height: 3pt;
+      background: #C1121F;
+      margin-bottom: 10pt;
+    }
+    .masthead-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 42pt;
+      font-weight: 900;
+      letter-spacing: 3pt;
+      text-transform: uppercase;
+      line-height: 1.05;
+      margin-bottom: 2pt;
+      color: #0E0E0E;
+    }
+    .masthead-meta {
+      font-family: 'Inter', sans-serif;
+      font-size: 7.5pt;
+      color: #888;
+      letter-spacing: 1.5pt;
+      text-transform: uppercase;
+      margin-bottom: 6pt;
+    }
+    .masthead-bottom-rule {
+      height: 1pt;
+      background: #1a1a1a;
+      margin-top: 4pt;
+    }
+    .masthead-double-rule {
+      height: 4pt;
+      border-top: 2pt solid #1a1a1a;
+      border-bottom: 1pt solid #1a1a1a;
+      margin-top: 2pt;
+    }
+
+    /* ─── Sub Header ─── */
+    .page-subheader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 7pt;
+      color: #888;
+      padding-bottom: 6pt;
+      border-bottom: 1pt solid #ccc;
+      margin-bottom: 12pt;
+      text-transform: uppercase;
+      letter-spacing: 1pt;
+    }
+
+    /* ─── Section Header ─── */
+    .section-header {
+      font-family: 'Inter', sans-serif;
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1pt;
+      color: #C1121F;
+      padding: 4pt 0;
+      border-bottom: 1pt solid #ddd;
+      margin-bottom: 10pt;
+    }
+
+    /* ─── Newspaper Native Flow ─── */
+    .hero-section {
+      width: 100%;
+      margin-bottom: 20pt;
+      border-bottom: 2pt solid #1a1a1a;
+      padding-bottom: 14pt;
+    }
+
+    .article-masonry {
+      column-count: 3;
+      column-gap: 20pt;
+      column-rule: 0.5pt solid #d5d0c5;
+      width: 100%;
+    }
+
+    /* ─── Article Block ─── */
+    .article-flow-item {
+      break-inside: avoid;
+      margin-bottom: 18pt;
+      page-break-inside: avoid;
+    }
+
+    /* ─── Article Typography ─── */
+    .article-headline {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 16pt;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 6pt;
+      color: #0E0E0E;
+    }
+    .hero-section .article-headline {
+      font-size: 32pt;
+      text-align: center;
+      margin-bottom: 10pt;
+    }
+
+    .article-subheadline {
+      font-family: 'Libre Baskerville', Georgia, serif;
+      font-size: 11pt;
+      font-style: italic;
+      color: #555;
+      margin-bottom: 6pt;
+      line-height: 1.35;
+    }
+    .hero-section .article-subheadline {
+      text-align: center;
+      font-size: 13pt;
+    }
+
+    .article-byline {
+      font-family: 'Inter', sans-serif;
+      font-size: 8pt;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 1pt;
+      margin-bottom: 10pt;
+      padding-bottom: 6pt;
+      border-bottom: 0.5pt solid #e5e0d5;
+    }
+    .hero-section .article-byline {
+      text-align: center;
+    }
+
+    .article-content {
+      text-align: justify;
+      hyphens: auto;
+      -webkit-hyphens: auto;
+      font-size: 10pt;
+      line-height: 1.65;
+      color: #2a2a2a;
+    }
+    .hero-section .article-content {
+      column-count: 3;
+      column-gap: 20pt;
+    }
+    .article-content p {
+      margin-bottom: 8pt;
+      text-indent: 1.5em;
+    }
+    .article-content p:first-child {
+      text-indent: 0;
+    }
+
+    /* Drop cap for hero articles */
+    .hero-section .article-content p:first-child::first-letter {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 4em;
+      float: left;
+      line-height: 0.8;
+      margin-right: 6pt;
+      margin-top: 4pt;
+      font-weight: 900;
+      color: #C1121F;
+    }
+
+    /* ─── Highlights Box ─── */
+    .highlights-box {
+      background: #f0ebe0;
+      padding: 12pt 14pt;
+      margin: 12pt 0;
+      border-left: 3pt solid #C1121F;
+      font-size: 9pt;
+      break-inside: avoid;
+    }
+    .highlights-box h4 {
+      font-family: 'Inter', sans-serif;
+      font-size: 7pt;
+      text-transform: uppercase;
+      letter-spacing: 1pt;
+      margin-bottom: 5pt;
+      color: #C1121F;
+      font-weight: 700;
+    }
+    .highlights-box ul {
+      padding-left: 14pt;
+      color: #333;
+    }
+    .highlights-box li {
+      margin-bottom: 3pt;
+      line-height: 1.4;
+    }
+
+    /* ─── Article Image ─── */
+    .article-image {
+      width: 100%;
+      margin-bottom: 8pt;
+    }
+    .article-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .article-image-caption {
+      font-family: 'Inter', sans-serif;
+      font-size: 7pt;
+      font-style: italic;
+      color: #999;
+      margin-top: 3pt;
+    }
+
+    /* ─── Page Footer ─── */
+    .page-footer {
+      position: absolute;
+      bottom: 0.4in;
+      left: 0.6in;
+      right: 0.6in;
+      text-align: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 6.5pt;
+      color: #bbb;
+      padding-top: 6pt;
+      border-top: 0.5pt solid #ddd;
+      letter-spacing: 0.5pt;
+    }
+
+    /* ─── Category Tag ─── */
+    .category-tag {
+      font-family: 'Inter', sans-serif;
+      font-size: 6.5pt;
+      text-transform: uppercase;
+      letter-spacing: 1.2pt;
+      color: #C1121F;
+      font-weight: 700;
+      margin-bottom: 4pt;
+    }
+
+    /* ─── Divider ─── */
+    .article-divider {
+      grid-column: span 6;
+      height: 0.5pt;
+      background: #d5d0c5;
+      margin: 4pt 0;
+    }
+  </style>
+</head>
+<body>
+  {% for page in pages %}
+  <div class="newspaper-page">
+
+    {# Masthead only on front page #}
+    {% if page.is_front_page %}
+    <header class="masthead">
+      <div class="masthead-top-rule"></div>
+      <div class="masthead-name">{{ edition.newspaper_name }}</div>
+      <div class="masthead-meta">
+        {{ edition.publication_date|date:"l, F j, Y" }} &nbsp;&bull;&nbsp;
+        Edition #{{ edition.edition_number }} &nbsp;&bull;&nbsp;
+        {{ edition.page_size }}
+      </div>
+      <div class="masthead-bottom-rule"></div>
+      <div class="masthead-double-rule"></div>
+    </header>
+    {% else %}
+    <div class="page-subheader">
+      <span>{{ edition.newspaper_name }}</span>
+      <span>{{ edition.publication_date|date:"F j, Y" }}</span>
+      <span>Page {{ page.page_number }} of {{ total_pages }}</span>
+    </div>
+    {% endif %}
+
+    {# We are using the true native flow recommended architecture. 
+       Ignore the engine's strict pagination which breaks on large columns #}
+    {% if page.is_front_page %}
+    
+    {# Output HERO articles first at full width #}
+    {% for placement in page.placements %}
+      {% if placement.article.priority == 'HERO' or placement.columns >= 5 %}
+      <section class="hero-section">
+        {% if placement.article.category %}
+        <div class="category-tag">{{ placement.article.category.name }}</div>
+        {% endif %}
+        <h2 class="article-headline">{{ placement.article.headline }}</h2>
+        {% if placement.article.subheadline %}
+        <p class="article-subheadline">{{ placement.article.subheadline }}</p>
+        {% endif %}
+        {% if placement.article.byline %}
+        <div class="article-byline">By {{ placement.article.byline }}</div>
+        {% endif %}
+        {% if placement.article.image %}
+        <div class="article-image" style="width: 80%; margin: 0 auto 14pt auto;">
+          <img src="{{ placement.article.image.url }}" alt="{{ placement.article.headline }}">
+          {% if placement.article.image_caption %}
+          <div class="article-image-caption">{{ placement.article.image_caption }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if placement.article.highlights %}
+        <div class="highlights-box" style="column-span: all;">
+          <h4>Key Points</h4>
+          <ul>
+            {% for highlight in placement.article.highlights %}
+            <li>{{ highlight }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        <div class="article-content">
+          {{ placement.article.content_parsed|safe }}
+        </div>
+      </section>
+      {% endif %}
+    {% endfor %}
+
+    {# Output remaining articles in native masonry columns #}
+    <section class="article-masonry">
+      {% for placement in page.placements %}
+        {% if placement.article.priority != 'HERO' and placement.columns < 5 %}
+        <article class="article-flow-item">
+          {% if placement.article.category %}
+          <div class="category-tag">{{ placement.article.category.name }}</div>
+          {% endif %}
+          <h2 class="article-headline">{{ placement.article.headline }}</h2>
+          {% if placement.article.subheadline %}
+          <p class="article-subheadline">{{ placement.article.subheadline }}</p>
+          {% endif %}
+          {% if placement.article.byline %}
+          <div class="article-byline">By {{ placement.article.byline }}</div>
+          {% endif %}
+          {% if placement.article.image %}
+          <div class="article-image">
+            <img src="{{ placement.article.image.url }}" alt="{{ placement.article.headline }}">
+            {% if placement.article.image_caption %}
+            <div class="article-image-caption">{{ placement.article.image_caption }}</div>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if placement.article.highlights %}
+          <div class="highlights-box">
+            <h4>Key Points</h4>
+            <ul>
+              {% for highlight in placement.article.highlights %}
+              <li>{{ highlight }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          <div class="article-content">
+            {{ placement.article.content_parsed|safe }}
+          </div>
+        </article>
+        {% endif %}
+      {% endfor %}
+    </section>
+
+    {% else %}
+    
+    {# Non-front pages: just native flowing structural masonry #}
+    <section class="article-masonry">
+      {% for placement in page.placements %}
+        <article class="article-flow-item">
+          {% if placement.article.category %}
+          <div class="category-tag">{{ placement.article.category.name }}</div>
+          {% endif %}
+          <h2 class="article-headline" {% if placement.columns >= 4 %}style="font-size: 20pt;"{% endif %}>
+            {{ placement.article.headline }}
+          </h2>
+          {% if placement.article.subheadline %}
+          <p class="article-subheadline">{{ placement.article.subheadline }}</p>
+          {% endif %}
+          {% if placement.article.byline %}
+          <div class="article-byline">By {{ placement.article.byline }}</div>
+          {% endif %}
+          {% if placement.article.image %}
+          <div class="article-image">
+            <img src="{{ placement.article.image.url }}" alt="{{ placement.article.headline }}">
+          </div>
+          {% endif %}
+          <div class="article-content">
+            {{ placement.article.content_parsed|safe }}
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+
+    {% endif %}
+
+    {# Page footer #}
+    <div class="page-footer">
+      {{ edition.newspaper_name }} &mdash; Page {{ page.page_number }} of {{ total_pages }}
+    </div>
+  </div>
+  {% endfor %}
+</body>
+</html>

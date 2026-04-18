@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ edition.newspaper_name }} — Edition #{{ edition.edition_number }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Noto+Serif:wght@400;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: {{ page_dim.width }} {{ page_dim.height }};
+      margin: 0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Serif', Georgia, serif;
+      font-size: 9pt;
+      line-height: 1.30;
+      color: #111;
+      background: #fff;
+    }
+
+    /* ─── Page Container ─── */
+    .newspaper-page {
+      page-break-after: always;
+      width: 100%;
+      padding: 24pt 22pt;
+      min-height: 100vh;
+      position: relative;
+      background: #fff;
+    }
+    .newspaper-page:last-child { page-break-after: avoid; }
+
+    /* ─── Masthead (compact) ─── */
+    .masthead {
+      text-align: center;
+      padding-bottom: 3pt;
+      margin-bottom: 5pt;
+      border-top: 3pt solid #000;
+    }
+    .masthead-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 32pt;
+      font-weight: 900;
+      letter-spacing: 2pt;
+      text-transform: uppercase;
+      line-height: 1.0;
+      margin-top: 4pt;
+      margin-bottom: 1pt;
+      color: #000;
+    }
+    .masthead-meta {
+      font-family: 'Inter', sans-serif;
+      font-size: 6pt;
+      color: #555;
+      letter-spacing: 1pt;
+      text-transform: uppercase;
+    }
+    .masthead-rule {
+      height: 2pt;
+      background: #000;
+      margin-top: 2pt;
+    }
+    .masthead-thin-rule {
+      height: 0.4pt;
+      background: #000;
+      margin-top: 1.5pt;
+    }
+
+    /* ─── Inner Page Header ─── */
+    .page-subheader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 5.5pt;
+      color: #666;
+      padding: 2pt 0;
+      border-top: 2pt solid #000;
+      border-bottom: 0.4pt solid #999;
+      margin-bottom: 5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.8pt;
+    }
+
+    /* ─── Hero Section ─── */
+    .hero-section {
+      width: 100%;
+      margin-bottom: 5pt;
+      padding-bottom: 5pt;
+      border-bottom: 1.5pt solid #000;
+    }
+    /* Clear floats within hero */
+    .hero-section::after {
+      content: "";
+      display: block;
+      clear: both;
+    }
+
+    /* ─── Column Grid ─── */
+    .column-grid {
+      display: grid;
+      grid-template-columns: repeat({{ column_count }}, 1fr);
+      column-gap: 12pt;
+      width: 100%;
+    }
+    .column { position: relative; }
+    .column:not(:first-child)::before {
+      content: '';
+      position: absolute;
+      left: -6pt;
+      top: 0;
+      bottom: 0;
+      width: 0.4pt;
+      background: #bbb;
+    }
+
+    /* ─── Multi-Column Span ─── */
+    .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: span 3; }
+
+    /* ─── Article Block (no card, unified grid) ─── */
+    .article-block {
+      margin-bottom: 5pt;
+      padding-bottom: 4pt;
+      border-bottom: 0.4pt solid #ccc;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .article-block:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    /* Clear floats inside every article */
+    .article-block::after {
+      content: "";
+      display: block;
+      clear: both;
+    }
+
+    /* ─── Category Tag ─── */
+    .category-tag {
+      font-family: 'Inter', sans-serif;
+      font-size: 5.5pt;
+      text-transform: uppercase;
+      letter-spacing: 1pt;
+      color: #C1121F;
+      font-weight: 800;
+      margin-bottom: 1pt;
+    }
+
+    /* ─── Headlines ─── */
+    .article-headline {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-weight: 900;
+      line-height: 1.06;
+      margin-bottom: 2pt;
+      color: #000;
+      letter-spacing: -0.3pt;
+    }
+    .headline-hero   { font-size: 26pt; margin-bottom: 3pt; }
+    .headline-major   { font-size: 16pt; }
+    .headline-standard { font-size: 12.5pt; }
+    .headline-minor   { font-size: 10.5pt; font-weight: 800; }
+
+    /* ─── Subheadline ─── */
+    .article-subheadline {
+      font-family: 'Noto Serif', Georgia, serif;
+      font-size: 9pt;
+      font-style: italic;
+      color: #333;
+      margin-bottom: 2pt;
+      line-height: 1.18;
+    }
+
+    /* ─── Byline ─── */
+    .article-byline {
+      font-family: 'Inter', sans-serif;
+      font-size: 6pt;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.8pt;
+      margin-bottom: 3pt;
+      font-weight: 600;
+    }
+
+    /* ─── Article Content ─── */
+    .article-content {
+      text-align: justify;
+      hyphens: auto;
+      -webkit-hyphens: auto;
+      font-size: 9pt;
+      line-height: 1.28;
+      color: #111;
+    }
+    /* Clear all floats after content */
+    .article-content::after {
+      content: "";
+      display: block;
+      clear: both;
+    }
+    .article-content p {
+      margin-bottom: 3pt;
+      text-indent: 1em;
+    }
+    .article-content p:first-child {
+      text-indent: 0;
+    }
+
+    /* Hero body in columns with column rules */
+    .hero-content-columns {
+      column-count: 3;
+      column-gap: 12pt;
+      column-rule: 0.4pt solid #ccc;
+    }
+
+    /* ─── Drop Cap ─── */
+    .drop-cap-block p:first-child::first-letter {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 3em;
+      float: left;
+      line-height: 0.75;
+      margin-right: 3pt;
+      margin-top: 1pt;
+      font-weight: 900;
+      color: #000;
+    }
+
+    /* ═══════════════════════════════════════════ */
+    /* ─── FLOAT WRAPPING SYSTEM ─── */
+    /* ═══════════════════════════════════════════ */
+
+    /* Block image (hero / major — full width above text) */
+    .article-image-block {
+      width: 100%;
+      margin-bottom: 4pt;
+    }
+    .article-image-block img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Floated inline image — text wraps around it */
+    .article-image-float-right {
+      float: right;
+      width: 40%;
+      margin: 0 0 6pt 8pt;
+    }
+    .article-image-float-left {
+      float: left;
+      width: 40%;
+      margin: 0 8pt 6pt 0;
+    }
+    .article-image-float-right img,
+    .article-image-float-left img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Image caption */
+    .article-image-caption {
+      font-family: 'Inter', sans-serif;
+      font-size: 5.5pt;
+      color: #777;
+      margin-top: 1pt;
+      line-height: 1.12;
+    }
+
+    /* Hero centered image */
+    .hero-image-center {
+      margin: 0 auto 5pt auto;
+    }
+    .hero-image-center img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ─── Highlight Box Float Wrapping ─── */
+    .highlights-box {
+      background: #f5f3ee;
+      padding: 4pt 6pt;
+      border-left: 2pt solid #C1121F;
+      font-size: 7pt;
+      line-height: 1.22;
+      break-inside: avoid;
+    }
+    /* Floated highlights — text wraps around */
+    .highlights-float-left {
+      float: left;
+      width: 45%;
+      margin: 0 8pt 5pt 0;
+    }
+    .highlights-float-right {
+      float: right;
+      width: 45%;
+      margin: 0 0 5pt 8pt;
+    }
+    /* Block highlights (hero) — full width */
+    .highlights-block {
+      margin: 3pt 0;
+    }
+    .highlights-box h4 {
+      font-family: 'Inter', sans-serif;
+      font-size: 5pt;
+      text-transform: uppercase;
+      letter-spacing: 1pt;
+      margin-bottom: 2pt;
+      color: #C1121F;
+      font-weight: 800;
+    }
+    .highlights-box ul { padding-left: 10pt; color: #222; }
+    .highlights-box li { margin-bottom: 1pt; }
+
+    /* ─── Continuation Markers ─── */
+    .continuation-marker {
+      font-family: 'Inter', sans-serif;
+      font-size: 6.5pt;
+      font-style: italic;
+      color: #C1121F;
+      margin-top: 2pt;
+      text-align: right;
+      font-weight: 600;
+      clear: both;
+    }
+    .continued-from {
+      font-family: 'Inter', sans-serif;
+      font-size: 6.5pt;
+      font-style: italic;
+      color: #555;
+      margin-bottom: 2pt;
+    }
+
+    /* ─── Dividers ─── */
+    .thick-rule {
+      height: 1.5pt;
+      background: #000;
+      margin: 2pt 0;
+      clear: both;
+    }
+
+    /* ─── Page Footer ─── */
+    .page-footer {
+      position: absolute;
+      bottom: 14pt;
+      left: 22pt;
+      right: 22pt;
+      text-align: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 5pt;
+      color: #999;
+      padding-top: 2pt;
+      border-top: 0.4pt solid #ddd;
+    }
+  </style>
+</head>
+<body>
+
+  {% for page in pages %}
+  <div class="newspaper-page">
+
+    {# ─── MASTHEAD ─── #}
+    {% if page.is_front_page %}
+    <header class="masthead">
+      <div class="masthead-name">{{ edition.newspaper_name }}</div>
+      <div class="masthead-meta">
+        {{ edition.publication_date|date:"l, F j, Y" }} &bull;
+        Edition #{{ edition.edition_number }} &bull;
+        {{ edition.page_size }}
+      </div>
+      <div class="masthead-rule"></div>
+      <div class="masthead-thin-rule"></div>
+    </header>
+    {% else %}
+    <div class="page-subheader">
+      <span>{{ edition.newspaper_name }}</span>
+      <span>{{ edition.publication_date|date:"F j, Y" }}</span>
+      <span>Page {{ page.page_number }} of {{ page.total_pages }}</span>
+    </div>
+    {% endif %}
+
+    {# ─── HERO ARTICLES ─── #}
+    {% for hero in page.hero_articles %}
+    <section class="hero-section">
+
+      {% if hero.article.category %}
+      <div class="category-tag">{{ hero.article.category.name }}</div>
+      {% endif %}
+
+      {% if hero.continued_from_page %}
+      <div class="continued-from">Continued from Page {{ hero.continued_from_page }}</div>
+      {% endif %}
+
+      <h1 class="article-headline headline-hero">{{ hero.article.headline }}</h1>
+
+      {% if hero.article.subheadline %}
+      <p class="article-subheadline">{{ hero.article.subheadline }}</p>
+      {% endif %}
+
+      {% if hero.article.byline %}
+      <div class="article-byline">{{ hero.article.byline }}</div>
+      {% endif %}
+
+      {# Hero image: block centered, max 60% width #}
+      {% if hero.article.image %}
+      <div class="hero-image-center" style="max-width: {{ hero.image_width_pct }}%;">
+        <img src="{{ hero.article.image.url }}" alt="{{ hero.article.headline }}">
+        {% if hero.article.image_caption %}
+        <div class="article-image-caption">{{ hero.article.image_caption }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {# Hero highlights: block, full width #}
+      {% if hero.article.highlights %}
+      <div class="highlights-box highlights-block">
+        <h4>Key Points</h4>
+        <ul>
+          {% for highlight in hero.article.highlights %}
+          <li>{{ highlight }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="article-content hero-content-columns drop-cap-block">
+        {{ hero.content_html|safe }}
+      </div>
+
+      {% if hero.continued_on_page %}
+      <div class="continuation-marker">Continued on Page {{ hero.continued_on_page }} &rarr;</div>
+      {% endif %}
+    </section>
+    {% endfor %}
+
+    {# ─── COLUMN GRID ─── #}
+    <div class="column-grid">
+      {% for column in page.columns %}
+      <div class="column">
+        {% for item in column.articles %}
+        <article class="article-block{% if item.span_class %} {{ item.span_class }}{% endif %}">
+
+          {% if item.continued_from_page %}
+          <div class="continued-from">
+            <strong>{{ item.article.headline|truncatewords:5 }}</strong> &mdash; from Page {{ item.continued_from_page }}
+          </div>
+          {% endif %}
+
+          {% if not item.is_continuation %}
+            {% if item.article.category %}
+            <div class="category-tag">{{ item.article.category.name }}</div>
+            {% endif %}
+          {% endif %}
+
+          {% if not item.is_continuation %}
+          <h2 class="article-headline {{ item.headline_class }}">{{ item.article.headline }}</h2>
+          {% endif %}
+
+          {% if not item.is_continuation and item.article.subheadline %}
+          <p class="article-subheadline">{{ item.article.subheadline }}</p>
+          {% endif %}
+
+          {% if not item.is_continuation and item.article.byline %}
+          <div class="article-byline">{{ item.article.byline }}</div>
+          {% endif %}
+
+          {# ─── IMAGE with float wrapping ─── #}
+          {% if not item.is_continuation and item.article.image %}
+            {% if item.image_wrap_mode == 'float' %}
+              {# Floated image — text wraps around it #}
+              <div class="article-image-float-{{ item.image_float }}">
+                <img src="{{ item.article.image.url }}" alt="{{ item.article.headline }}">
+                {% if item.article.image_caption %}
+                <div class="article-image-caption">{{ item.article.image_caption }}</div>
+                {% endif %}
+              </div>
+            {% else %}
+              {# Block image — full width above text #}
+              <div class="article-image-block">
+                <img src="{{ item.article.image.url }}" alt="{{ item.article.headline }}">
+                {% if item.article.image_caption %}
+                <div class="article-image-caption">{{ item.article.image_caption }}</div>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endif %}
+
+          {# ─── HIGHLIGHTS with float wrapping ─── #}
+          {% if not item.is_continuation and item.article.highlights %}
+            {% if item.highlight_float != 'none' %}
+              {# Floated highlights — text wraps around #}
+              <div class="highlights-box highlights-float-{{ item.highlight_float }}">
+                <h4>Key Points</h4>
+                <ul>
+                  {% for highlight in item.article.highlights %}
+                  <li>{{ highlight }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% else %}
+              {# Block highlights — full width #}
+              <div class="highlights-box highlights-block">
+                <h4>Key Points</h4>
+                <ul>
+                  {% for highlight in item.article.highlights %}
+                  <li>{{ highlight }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          {% endif %}
+
+          {# ─── BODY CONTENT (wraps around floated elements) ─── #}
+          <div class="article-content">
+            {{ item.content_html|safe }}
+          </div>
+
+          {% if item.continued_on_page %}
+          <div class="continuation-marker">Continued on Page {{ item.continued_on_page }} &rarr;</div>
+          {% endif %}
+
+        </article>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="page-footer">
+      {{ edition.newspaper_name }} &mdash; Page {{ page.page_number }} of {{ page.total_pages }}
+    </div>
+
+  </div>
+  {% endfor %}
+
+</body>
+</html>

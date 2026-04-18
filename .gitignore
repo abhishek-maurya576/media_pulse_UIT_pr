@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+.env
+
+# Django
+/server/media/
+/server/staticfiles/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.ide/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (for client/)
+node_modules/
+dist/
+.next/
+
+# Generated
+*.pdf
+

@@ -1,0 +1,1 @@
+# Media Puls Django Project
