@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from .models import Edition, Article, Category
 from .serializers import ArticleListSerializer, CategorySerializer
@@ -113,7 +113,7 @@ class SearchArticlesView(generics.ListAPIView):
 def public_categories(request):
     """All categories for navigation chips."""
     categories = Category.objects.annotate(
-        article_count=Count('articles')
+        article_count=Count('articles', filter=Q(articles__edition__status='COMPLETED'))
     ).order_by('display_order')
     data = [
         {
