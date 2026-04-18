@@ -1,0 +1,32 @@
+# Render Blueprint — Media Pulse Backend
+# https://render.com/docs/blueprint-spec
+
+databases:
+  - name: media-pulse-db
+    plan: free
+    databaseName: media_pulse
+    user: media_pulse_user
+
+services:
+  - type: web
+    name: media-pulse-api
+    runtime: python
+    plan: free
+    rootDir: server
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn media_puls.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: media-pulse-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://media-pulse.onrender.com,http://localhost:5173"
