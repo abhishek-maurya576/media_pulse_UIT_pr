@@ -48,7 +48,7 @@ export const CONFIG = {
   },
 
   api: {
-    baseUrl: '/api',
+    baseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
     timeout: 30_000,
   },
 
