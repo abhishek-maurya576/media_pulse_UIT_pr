@@ -103,36 +103,73 @@ def compose(edition, articles: list) -> List[dict]:
             key=lambda a: (PRIORITY_ORDER.get(a.priority, 99), a.order)
         )
 
-        is_front = (len(all_compositions) == 0)
-        result = place_articles_on_page(
-            cat_articles, page_size, is_front_page=is_front,
-        )
+        # Place articles — may produce overflow
+        pending = list(cat_articles)
+        cat_page_count = 0
 
-        content_height = config.get_content_height(page_size, is_front)
-        used = result.hero_zone_height + result.max_column_height
+        while pending:
+            is_front = (len(all_compositions) == 0)
+            result = place_articles_on_page(
+                pending, page_size, is_front_page=is_front,
+            )
 
-        # ─── Fill remaining space with uncategorized articles ───
-        fill_placements, fill_columns, fill_used = _fill_remaining_space(
-            uncat_pool, result, page_size, is_front, content_height, col_count,
-        )
+            placed_count = len(result.hero_placements) + len(result.column_placements)
 
-        total_used = used + fill_used
+            # If nothing was placed, article is too large for any single page.
+            # Force-place it anyway (CSS will handle overflow) to avoid blank pages.
+            if placed_count == 0 and pending:
+                from newspaper_engine.measurer import measure_article as _ma
+                from newspaper_engine.placer import PlacedArticle as _PA
+                forced_article = pending.pop(0)
+                col_w = config.get_column_width(page_size, col_count)
+                fm = _ma(forced_article, col_w, is_hero=False)
+                forced_placement = _PA(
+                    article=forced_article,
+                    column_index=0,
+                    column_span=1,
+                    y_offset=0.0,
+                    height=fm.total,
+                    measurement=fm,
+                    content_html=_get_content(forced_article),
+                )
+                result.column_placements.append(forced_placement)
+                result.columns[0].placements.append(forced_placement)
+                result.max_column_height = fm.total
+                placed_count = 1
 
-        comp = PageComposition(
-            page_number=len(all_compositions) + 1,
-            is_front_page=is_front,
-            column_count=col_count,
-            hero_placements=result.hero_placements,
-            column_placements=result.column_placements + fill_placements,
-            columns=result.columns,
-            hero_zone_height=result.hero_zone_height,
-            max_column_height=result.max_column_height + fill_used,
-            content_width=config.get_content_area(page_size)['width'],
-            content_height=content_height,
-            used_height=total_used,
-        )
-        all_compositions.append(comp)
-        page_categories.append(group['category_name'])
+            content_height = config.get_content_height(page_size, is_front)
+            used = result.hero_zone_height + result.max_column_height
+
+            # Fill remaining space with uncategorized articles
+            fill_placements, _, fill_used = _fill_remaining_space(
+                uncat_pool, result, page_size, is_front, content_height, col_count,
+            )
+
+            total_used = used + fill_used
+
+            comp = PageComposition(
+                page_number=len(all_compositions) + 1,
+                is_front_page=is_front,
+                column_count=col_count,
+                hero_placements=result.hero_placements,
+                column_placements=result.column_placements + fill_placements,
+                columns=result.columns,
+                hero_zone_height=result.hero_zone_height,
+                max_column_height=result.max_column_height + fill_used,
+                content_width=config.get_content_area(page_size)['width'],
+                content_height=content_height,
+                used_height=total_used,
+            )
+            all_compositions.append(comp)
+            page_categories.append(group['category_name'])
+
+            # Move overflow to next iteration
+            pending = list(result.overflow_articles)
+            cat_page_count += 1
+
+            # Safety: max 10 pages per category
+            if cat_page_count > 10:
+                break
 
     # ─── Step 3: Place remaining uncategorized on final page(s) ───
     if uncat_pool:

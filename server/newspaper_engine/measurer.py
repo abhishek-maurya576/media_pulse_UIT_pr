@@ -2,11 +2,16 @@
 Newspaper Engine — Content Height Measurer
 
 Estimates rendered height (in points) of each article component.
-Conservative estimates — slightly overestimates to prevent overflow.
+Conservative estimates — overestimates to prevent overflow.
+
+Accounts for HTML structural elements: headings, lists, blockquotes,
+not just raw text. This prevents articles from overflowing their
+assigned page space.
 """
 
 import math
 import os
+import re
 from dataclasses import dataclass
 from typing import Optional
 
@@ -89,7 +94,7 @@ def measure_article(article, column_width: float, is_hero: bool = False) -> Arti
         if not is_hero:
             m.highlights *= config.FLOAT_HEIGHT_FACTOR
 
-    # Body content
+    # Body content — uses structure-aware measurement
     content = getattr(article, 'content_parsed', '') or getattr(article, 'content_raw', '') or ''
     if content:
         body_width = column_width
@@ -104,8 +109,8 @@ def measure_article(article, column_width: float, is_hero: bool = False) -> Arti
 
     raw_total = sum(present) + m.spacing
 
-    # Safety multiplier: overestimate by 12% to prevent page overflow
-    m.total = raw_total * 1.12
+    # Safety multiplier: overestimate by 15% to prevent page overflow
+    m.total = raw_total * 1.15
     return m
 
 
@@ -130,13 +135,61 @@ def _measure_text_block(
 
 
 def _measure_body_content(html_content: str, column_width: float) -> float:
-    """Estimate body text height from HTML content."""
-    import re
+    """
+    Estimate body text height from HTML content.
+
+    Structure-aware: accounts for headings (h2-h4), lists (ul/ol/li),
+    blockquotes, and paragraph margins — not just raw text.
+    """
+    if not html_content:
+        return 0.0
+
+    total_height = 0.0
+    line_height_pt = config.BODY_FONT_SIZE * config.BODY_LINE_HEIGHT
+
+    # ─── Count structural elements BEFORE stripping tags ───
+
+    # Headings: each adds font-size + margins
+    h2_count = len(re.findall(r'<h2[\s>]', html_content, re.IGNORECASE))
+    h3_count = len(re.findall(r'<h3[\s>]', html_content, re.IGNORECASE))
+    h4_count = len(re.findall(r'<h4[\s>]', html_content, re.IGNORECASE))
+    # h2 = ~13pt font + 8pt top margin + 4pt bottom = ~25pt each
+    # h3 = ~11pt font + 6pt top margin + 3pt bottom = ~20pt each
+    # h4 = ~10pt font + 4pt top margin + 2pt bottom = ~16pt each
+    total_height += h2_count * 25.0
+    total_height += h3_count * 20.0
+    total_height += h4_count * 16.0
+
+    # List items: each adds line-height + bullet margin
+    li_count = len(re.findall(r'<li[\s>]', html_content, re.IGNORECASE))
+    # Each <li> = ~line_height + 3pt padding + 2pt bullet space
+    total_height += li_count * (line_height_pt + 5.0)
+
+    # List containers (ul/ol): each adds padding
+    ul_count = len(re.findall(r'<(?:ul|ol)[\s>]', html_content, re.IGNORECASE))
+    total_height += ul_count * 8.0  # top+bottom padding per list
+
+    # Blockquotes: add padding + border space
+    bq_count = len(re.findall(r'<blockquote[\s>]', html_content, re.IGNORECASE))
+    total_height += bq_count * 16.0
+
+    # <hr> / horizontal rules
+    hr_count = len(re.findall(r'<hr[\s/>]', html_content, re.IGNORECASE))
+    total_height += hr_count * 10.0
+
+    # <strong>/<b> within body: bold text is slightly wider, so more lines
+    bold_sections = re.findall(r'<(?:strong|b)>(.+?)</(?:strong|b)>', html_content, re.IGNORECASE | re.DOTALL)
+    bold_extra_chars = sum(len(s) for s in bold_sections)
+    # Bold text is ~10% wider → causes extra line wraps
+    bold_extra_lines = math.ceil(bold_extra_chars * 0.10 / max(1, int(column_width * config.BODY_CHARS_PER_PT)))
+    total_height += bold_extra_lines * line_height_pt
+
+    # ─── Now measure the plain text body ───
     clean = re.sub(r'<[^>]+>', ' ', html_content)
     clean = re.sub(r'\s+', ' ', clean).strip()
 
     if not clean:
-        return 0.0
+        return total_height
 
     words = clean.split()
     word_count = len(words)
@@ -145,12 +198,14 @@ def _measure_body_content(html_content: str, column_width: float) -> float:
     words_per_line = max(1, int(column_width / (avg_word_width_pt * 5)))
 
     num_lines = math.ceil(word_count / words_per_line)
-    line_height_pt = config.BODY_FONT_SIZE * config.BODY_LINE_HEIGHT
 
-    paragraph_count = max(1, word_count // 80)
-    paragraph_spacing = paragraph_count * 4.0  # tight <p> margins
+    # Paragraph count (from <p> tags or text breaks)
+    p_count = max(1, len(re.findall(r'<p[\s>]', html_content, re.IGNORECASE)))
+    paragraph_spacing = p_count * 6.0  # margin-bottom per paragraph
 
-    return (num_lines * line_height_pt) + paragraph_spacing
+    total_height += (num_lines * line_height_pt) + paragraph_spacing
+
+    return total_height
 
 
 def _measure_image(article, column_width: float, is_hero: bool) -> float:

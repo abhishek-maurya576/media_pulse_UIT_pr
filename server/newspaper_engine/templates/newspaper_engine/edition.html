@@ -93,14 +93,15 @@
 
     /* ─── Page Container ─── */
     .newspaper-page {
-      page-break-after: always;
       width: 100%;
       padding: 24pt 22pt;
       position: relative;
       background: #fff;
-      overflow: hidden;
     }
-    .newspaper-page:last-child { page-break-after: avoid; }
+    /* Page break BEFORE each page (except first) prevents blank trailing pages */
+    .newspaper-page + .newspaper-page {
+      page-break-before: always;
+    }
 
     /* ═══════════════════════════════════════════════════════ */
     /* ─── HINDI MASTHEAD (बी. आर. टाइम्स) ─── */
@@ -264,13 +265,26 @@
     .span-2 { grid-column: span 2; }
     .span-3 { grid-column: span 3; }
 
+    /* ─── Full-width single article: CSS multi-column flow ─── */
+    .full-width-flow {
+      width: 100%;
+    }
+    .article-multi-col {
+      column-count: 3;
+      column-gap: 12pt;
+      column-rule: var(--np-column-rule) solid var(--np-column-rule-color);
+      text-align: justify;
+    }
+
     /* ─── Article Block ─── */
     .article-block {
       margin-bottom: 5pt;
       padding-bottom: 4pt;
       border-bottom: 0.4pt solid #ccc;
-      break-inside: avoid;
-      page-break-inside: avoid;
+      /* Allow page breaks inside articles so long content doesn't push
+         the entire block to the next page, leaving a blank page behind. */
+      break-inside: auto;
+      page-break-inside: auto;
     }
     .article-block:last-child {
       border-bottom: none;
@@ -280,6 +294,11 @@
       content: "";
       display: block;
       clear: both;
+    }
+    /* Keep headlines glued to their content — never orphan a headline */
+    .article-headline {
+      break-after: avoid;
+      page-break-after: avoid;
     }
 
     /* ─── Category Tag ─── */
@@ -657,6 +676,63 @@
     {% endfor %}
 
     {# ─── COLUMN GRID ─── #}
+    {# Count total articles across all columns #}
+    {% with total_col_articles=page.columns.0.articles|length %}
+    {% if total_col_articles == 1 and page.columns.1.articles|length == 0 %}
+    {# ── SINGLE ARTICLE: use CSS multi-column flow for full-width layout ── #}
+    {% for item in page.columns.0.articles %}
+    <article class="article-block full-width-flow">
+
+      {% if not item.is_continuation %}
+        {% if item.article.category %}
+        <div class="category-tag">{{ item.article.category.name }}</div>
+        {% endif %}
+      {% endif %}
+
+      {% if not item.is_continuation %}
+      <h2 class="article-headline {{ item.headline_class }}">{{ item.article.headline }}</h2>
+      {% endif %}
+
+      {% if not item.is_continuation and item.article.subheadline %}
+      <p class="article-subheadline">{{ item.article.subheadline }}</p>
+      {% endif %}
+
+      {% if not item.is_continuation and item.article.byline %}
+      <div class="article-byline">{{ item.article.byline }}</div>
+      {% endif %}
+
+      {# ─── IMAGE ─── #}
+      {% if not item.is_continuation and item.article.image %}
+        <div class="article-image-float-right">
+          <img src="{{ item.article.image.url }}" alt="{{ item.article.headline }}">
+          {% if item.article.image_caption %}
+          <div class="article-image-caption">{{ item.article.image_caption }}</div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {# ─── HIGHLIGHTS ─── #}
+      {% if not item.is_continuation and item.article.highlights %}
+        <div class="highlights-box highlights-float-left">
+          <h4>मुख्य बिंदु</h4>
+          <ul>
+            {% for highlight in item.article.highlights %}
+            <li>{{ highlight }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {# ─── BODY CONTENT with CSS columns ─── #}
+      <div class="article-content article-multi-col">
+        {{ item.content_html|safe }}
+      </div>
+
+    </article>
+    {% endfor %}
+
+    {% else %}
+    {# ── NORMAL MULTI-ARTICLE: use CSS Grid columns ── #}
     <div class="column-grid">
       {% for column in page.columns %}
       <div class="column">
@@ -743,6 +819,8 @@
       </div>
       {% endfor %}
     </div>
+    {% endif %}
+    {% endwith %}
 
     {# ═══════════════════════════════════════════ #}
     {# ─── EDITORIAL BOARD (Last Page Only) ─── #}
