@@ -178,6 +178,26 @@ export const CONFIG = {
     SUPERADMIN: { label: 'Super Admin', color: '#EF4444' },
   },
 
+  userStatuses: {
+    active: { label: 'Active', color: '#34D399' },
+    suspended: { label: 'Suspended', color: '#FBBF24' },
+    banned: { label: 'Banned', color: '#EF4444' },
+    deleted: { label: 'Deleted', color: '#6B6560' },
+  },
+
+  auditActions: {
+    'user.created': { label: 'User Created' },
+    'role.changed': { label: 'Role Changed' },
+    'user.suspended': { label: 'User Suspended' },
+    'user.banned': { label: 'User Banned' },
+    'user.activated': { label: 'User Activated' },
+    'user.deleted': { label: 'User Deleted' },
+    'password.reset': { label: 'Password Reset' },
+    'user.force_logout': { label: 'Force Logout' },
+    'user.login': { label: 'User Login' },
+    'user.updated': { label: 'Profile Updated' },
+  },
+
   navCategories: [
     'Politics', 'Technology', 'Sports', 'Business',
     'Health', 'Culture', 'Science', 'World',
@@ -188,3 +208,4 @@ export type Priority = keyof typeof CONFIG.priorities;
 export type PageSize = keyof typeof CONFIG.pageSizes;
 export type ContentFormat = keyof typeof CONFIG.contentFormats;
 export type EditionStatus = keyof typeof CONFIG.editionStatuses;
+export type UserStatusKey = keyof typeof CONFIG.userStatuses;

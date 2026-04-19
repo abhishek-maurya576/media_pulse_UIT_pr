@@ -314,9 +314,79 @@ export const publicApi = {
   journalists: () => api.get<Journalist[]>('/public/journalists/').then(r => r.data),
 };
 
+// ─── Admin Types ───
+export interface AdminUser {
+  id: string;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  status: string;
+  avatar: string | null;
+  bio: string;
+  is_active: boolean;
+  date_joined: string;
+  last_login: string | null;
+  created_by_name: string | null;
+  article_count: number;
+  blog_count: number;
+  status_reason: string;
+  status_changed_at: string | null;
+}
+
+export interface AdminUserDetail extends AdminUser {
+  phone: string;
+  created_by: string | null;
+  published_blog_count: number;
+  follower_count: number;
+  following_count: number;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  actor: string | null;
+  actor_name: string;
+  action: string;
+  target_user: string | null;
+  target_user_name: string;
+  metadata: Record<string, any>;
+  created_at: string;
+}
+
+export interface UserStats {
+  total: number;
+  by_role: Record<string, number>;
+  by_status: Record<string, number>;
+}
+
 // ─── Admin API ───
 export const adminApi = {
-  listUsers: () => api.get<AuthUser[]>('/auth/admin/users/').then(r => r.data),
-  changeRole: (userId: string, role: string) =>
-    api.patch(`/auth/admin/users/${userId}/role/`, { role }).then(r => r.data),
+  listUsers: (params?: { role?: string; status?: string; search?: string; page?: number }) =>
+    api.get<PaginatedResponse<AdminUser>>('/auth/admin/users/', { params }).then(r => r.data),
+  getUser: (id: string) =>
+    api.get<AdminUserDetail>(`/auth/admin/users/${id}/`).then(r => r.data),
+  createUser: (data: {
+    username: string; email: string; password: string; role: string;
+    first_name?: string; last_name?: string;
+  }) =>
+    api.post<AdminUser>('/auth/admin/users/', data).then(r => r.data),
+  updateUser: (id: string, data: Record<string, any>) =>
+    api.patch<AdminUserDetail>(`/auth/admin/users/${id}/`, data).then(r => r.data),
+  changeRole: (id: string, role: string) =>
+    api.patch<AdminUser>(`/auth/admin/users/${id}/role/`, { role }).then(r => r.data),
+  changeStatus: (id: string, status: string, reason?: string) =>
+    api.patch<AdminUser>(`/auth/admin/users/${id}/status/`, { status, reason }).then(r => r.data),
+  resetPassword: (id: string, new_password: string) =>
+    api.post(`/auth/admin/users/${id}/reset-password/`, { new_password }).then(r => r.data),
+  forceLogout: (id: string) =>
+    api.post(`/auth/admin/users/${id}/force-logout/`).then(r => r.data),
+  bulkStatus: (user_ids: string[], status: string, reason?: string) =>
+    api.post('/auth/admin/users/bulk-status/', { user_ids, status, reason }).then(r => r.data),
+  bulkRole: (user_ids: string[], role: string) =>
+    api.post('/auth/admin/users/bulk-role/', { user_ids, role }).then(r => r.data),
+  auditLogs: (params?: { user_id?: string; action?: string; page?: number }) =>
+    api.get<PaginatedResponse<AuditLogEntry>>('/auth/admin/audit-logs/', { params }).then(r => r.data),
+  stats: () =>
+    api.get<UserStats>('/auth/admin/stats/').then(r => r.data),
 };

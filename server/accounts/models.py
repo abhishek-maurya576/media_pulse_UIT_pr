@@ -2,15 +2,22 @@
 Custom User model for Media Pulse with role-based access control.
 
 Roles: READER, JOURNALIST, EDITOR, ADMIN, SUPERADMIN
+Statuses: ACTIVE, SUSPENDED, BANNED, DELETED
 Permission-based modular RBAC as specified in RBAC.md.
 """
 
 from django.contrib.auth.models import AbstractUser, UserManager as BaseUserManager
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from .validators import validate_username
 
 import uuid
+
+
+# ─── Role Hierarchy (index = rank) ───
+ROLE_HIERARCHY = ['READER', 'JOURNALIST', 'EDITOR', 'ADMIN', 'SUPERADMIN']
+
 
 class UserRole(models.TextChoices):
     READER = 'READER', 'Registered Reader'
@@ -18,6 +25,13 @@ class UserRole(models.TextChoices):
     EDITOR = 'EDITOR', 'Editor'
     ADMIN = 'ADMIN', 'Admin'
     SUPERADMIN = 'SUPERADMIN', 'Super Admin'
+
+
+class UserStatus(models.TextChoices):
+    ACTIVE = 'active', 'Active'
+    SUSPENDED = 'suspended', 'Suspended'
+    BANNED = 'banned', 'Banned'
+    DELETED = 'deleted', 'Deleted'
 
 
 class UserManager(BaseUserManager):
@@ -29,7 +43,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
-    """Custom user with role and profile fields."""
+    """Custom user with role, status, and profile fields."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     role = models.CharField(
@@ -37,6 +51,27 @@ class User(AbstractUser):
         choices=UserRole.choices,
         default=UserRole.READER,
         db_index=True,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=UserStatus.choices,
+        default=UserStatus.ACTIVE,
+        db_index=True,
+    )
+    status_reason = models.CharField(
+        max_length=300,
+        blank=True,
+        default='',
+        help_text='Reason for suspension/ban',
+    )
+    status_changed_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_users',
+        help_text='Admin/SuperAdmin who created this user',
     )
 
     objects = UserManager()
@@ -51,6 +86,11 @@ class User(AbstractUser):
     def __str__(self):
         return f'{self.get_full_name() or self.username} ({self.role})'
 
+    def save(self, *args, **kwargs):
+        # Sync is_active with status so Django's built-in auth checks work
+        self.is_active = self.status == UserStatus.ACTIVE
+        super().save(*args, **kwargs)
+
     def clean(self):
         super().clean()
         if self.username:
@@ -58,12 +98,20 @@ class User(AbstractUser):
             # Actually, simply checking if it's the admin or a superadmin bypasses the check for system accounts.
             if self.is_superuser or self.role == UserRole.SUPERADMIN:
                 return
-            
+
             # Use the validator for normal saves
             try:
                 validate_username(self.username)
             except ValidationError as e:
                 raise ValidationError({'username': e.message if hasattr(e, 'message') else list(e.messages)[0]})
+
+    @property
+    def role_rank(self):
+        """Numeric rank for role hierarchy comparison."""
+        try:
+            return ROLE_HIERARCHY.index(self.role)
+        except ValueError:
+            return -1
 
     @property
     def is_journalist(self):
@@ -143,3 +191,67 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'{self.follower.username} follows {self.following.username}'
+
+
+class AuditLog(models.Model):
+    """
+    Tracks all admin actions for accountability.
+    Every user management action is recorded here.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    actor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='audit_actions',
+        help_text='The admin who performed the action',
+    )
+    action = models.CharField(
+        max_length=50,
+        db_index=True,
+        help_text='Action type: user.created, role.changed, user.suspended, etc.',
+    )
+    target_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='audit_events',
+        help_text='The user the action was performed on',
+    )
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Action-specific data: old_role, new_role, reason, ip_address, etc.',
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'accounts_auditlog'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['actor', '-created_at']),
+            models.Index(fields=['target_user', '-created_at']),
+            models.Index(fields=['action', '-created_at']),
+        ]
+
+    def __str__(self):
+        actor_name = self.actor.username if self.actor else 'System'
+        target_name = self.target_user.username if self.target_user else 'Unknown'
+        return f'{actor_name} → {self.action} → {target_name}'
+
+    @classmethod
+    def log(cls, actor, action, target_user=None, request=None, **extra_meta):
+        """Convenience method to create an audit log entry."""
+        metadata = dict(extra_meta)
+        if request:
+            ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip()
+            if not ip:
+                ip = request.META.get('REMOTE_ADDR', '')
+            metadata['ip_address'] = ip
+        return cls.objects.create(
+            actor=actor,
+            action=action,
+            target_user=target_user,
+            metadata=metadata,
+        )

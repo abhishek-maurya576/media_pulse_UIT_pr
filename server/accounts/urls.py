@@ -1,4 +1,4 @@
-"""URL routes for accounts — auth + profiles + follows + admin."""
+"""URL routes for accounts — auth + profiles + follows + admin user management."""
 
 from django.urls import path
 from . import views
@@ -20,5 +20,13 @@ urlpatterns = [
 
     # Admin user management
     path('admin/users/', views.admin_user_list, name='admin-user-list'),
+    path('admin/users/<uuid:user_id>/', views.admin_user_detail, name='admin-user-detail'),
     path('admin/users/<uuid:user_id>/role/', views.change_user_role, name='change-user-role'),
+    path('admin/users/<uuid:user_id>/status/', views.change_user_status, name='change-user-status'),
+    path('admin/users/<uuid:user_id>/reset-password/', views.admin_reset_password, name='admin-reset-password'),
+    path('admin/users/<uuid:user_id>/force-logout/', views.admin_force_logout, name='admin-force-logout'),
+    path('admin/users/bulk-status/', views.admin_bulk_status, name='admin-bulk-status'),
+    path('admin/users/bulk-role/', views.admin_bulk_role, name='admin-bulk-role'),
+    path('admin/audit-logs/', views.admin_audit_logs, name='admin-audit-logs'),
+    path('admin/stats/', views.admin_user_stats, name='admin-user-stats'),
 ]

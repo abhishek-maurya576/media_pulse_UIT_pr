@@ -19,6 +19,7 @@ import {
   ChevronRight,
   LogOut,
   User,
+  Users,
 } from 'lucide-react';
 
 const navItems = [
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/dashboard/blog', label: 'Blog Posts', icon: Newspaper, minRole: 'JOURNALIST' },
   { path: '/dashboard/categories', label: 'Categories', icon: FolderOpen, minRole: 'EDITOR' },
   { path: '/dashboard/templates', label: 'Templates', icon: LayoutTemplate, minRole: 'EDITOR' },
+  { path: '/dashboard/users', label: 'Users', icon: Users, minRole: 'ADMIN' },
   { path: '/dashboard/media', label: 'Media Library', icon: Image, minRole: 'JOURNALIST' },
   { path: '/dashboard/settings', label: 'Settings', icon: Settings, minRole: 'ADMIN' },
 ];

@@ -96,9 +96,9 @@
       page-break-after: always;
       width: 100%;
       padding: 24pt 22pt;
-      min-height: 100vh;
       position: relative;
       background: #fff;
+      overflow: hidden;
     }
     .newspaper-page:last-child { page-break-after: avoid; }
 
@@ -498,8 +498,9 @@
       font-size: 7pt;
       line-height: 1.4;
       color: #111;
-      margin-top: 8pt;
+      margin-top: 10pt;
       break-inside: avoid;
+      page-break-inside: avoid;
     }
     .editorial-board .eb-title {
       font-size: 12pt;

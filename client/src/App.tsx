@@ -30,6 +30,7 @@ const CategoryManager = lazy(() => import('./pages/CategoryManager'));
 const TemplateManager = lazy(() => import('./pages/TemplateManager'));
 const MediaLibrary = lazy(() => import('./pages/MediaLibrary'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const UserManagement = lazy(() => import('./pages/UserManagement'));
 const BlogList = lazy(() => import('./pages/BlogList'));
 const BlogEditor = lazy(() => import('./pages/BlogEditor'));
 
@@ -99,6 +100,9 @@ function App() {
 
                 {/* Settings (Admin+) */}
                 <Route path="/dashboard/settings" element={<SettingsPage />} />
+
+                {/* User Management (Admin+) */}
+                <Route path="/dashboard/users" element={<UserManagement />} />
               </Route>
             </Route>
           </Routes>
