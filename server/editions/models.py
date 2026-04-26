@@ -42,6 +42,13 @@ class EditionStatus(models.TextChoices):
     FAILED = 'FAILED', 'Failed'
 
 
+class ArticleStatus(models.TextChoices):
+    DRAFT = 'DRAFT', 'Draft'
+    SUBMITTED = 'SUBMITTED', 'Submitted for Review'
+    PUBLISHED = 'PUBLISHED', 'Published'
+    ARCHIVED = 'ARCHIVED', 'Archived'
+
+
 class LayoutMode(models.TextChoices):
     FIXED_TEMPLATE = 'FIXED_TEMPLATE', 'Fixed Template'
 
@@ -193,6 +200,12 @@ class Article(BaseModel):
         default='',
         help_text='HTML output from parser',
     )
+    status = models.CharField(
+        max_length=20,
+        choices=ArticleStatus.choices,
+        default=ArticleStatus.PUBLISHED,
+        db_index=True,
+    )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -241,6 +254,7 @@ class Article(BaseModel):
         ordering = ['order', '-priority', '-created_at']
         indexes = [
             models.Index(fields=['edition', 'priority']),
+            models.Index(fields=['edition', 'status']),
             models.Index(fields=['edition', 'order']),
             models.Index(fields=['author', 'created_at']),
         ]

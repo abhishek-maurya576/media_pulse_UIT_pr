@@ -1,5 +1,6 @@
 """Blog API views with RBAC enforcement."""
 
+from django.db.models import F
 from django.utils import timezone
 from rest_framework import viewsets, generics, status
 from rest_framework.decorators import api_view, permission_classes, action
@@ -44,8 +45,8 @@ def public_blog_detail(request, slug):
     except BlogPost.DoesNotExist:
         return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-    post.views_count += 1
-    post.save(update_fields=['views_count'])
+    BlogPost.objects.filter(pk=post.pk).update(views_count=F('views_count') + 1)
+    post.views_count += 1  # reflect in serializer response without re-fetching
     serializer = BlogPostSerializer(post)
     return Response(serializer.data)
 

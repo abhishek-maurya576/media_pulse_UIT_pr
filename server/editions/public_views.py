@@ -1,14 +1,16 @@
 """Public API views — no auth required, read-only for landing page."""
 
-from rest_framework import generics, filters, status
+from rest_framework import generics, filters, status, serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404
 
-from .models import Edition, Article, Category
-from .serializers import ArticleListSerializer, CategorySerializer
+from .models import Edition, Article, Category, ArticleStatus
+from .serializers import ArticleListSerializer, ArticleSerializer, CategorySerializer
+from generator.parsers import sanitize_html
 
 
 class PublicPagination(PageNumberPagination):
@@ -19,9 +21,13 @@ class PublicPagination(PageNumberPagination):
 
 class PublicArticleSerializer(ArticleListSerializer):
     """Extended public serializer with extra fields for landing page."""
+    content_parsed = serializers.SerializerMethodField()
 
     class Meta(ArticleListSerializer.Meta):
-        fields = ArticleListSerializer.Meta.fields + ['image', 'image_caption', 'content_raw']
+        fields = ArticleListSerializer.Meta.fields + ['image', 'image_caption', 'content_parsed']
+
+    def get_content_parsed(self, obj):
+        return sanitize_html(obj.content_parsed or '')
 
 
 @api_view(['GET'])
@@ -31,7 +37,7 @@ def featured_articles(request):
     articles = (
         Article.objects
         .select_related('category', 'author', 'edition')
-        .filter(edition__status='COMPLETED')
+        .filter(edition__status='COMPLETED', status=ArticleStatus.PUBLISHED)
         .order_by('-priority', '-created_at')[:5]
     )
     serializer = PublicArticleSerializer(articles, many=True)
@@ -45,7 +51,7 @@ def trending_articles(request):
     articles = (
         Article.objects
         .select_related('category', 'author', 'edition')
-        .filter(edition__status='COMPLETED')
+        .filter(edition__status='COMPLETED', status=ArticleStatus.PUBLISHED)
         .order_by('-created_at')[:10]
     )
     serializer = PublicArticleSerializer(articles, many=True)
@@ -62,7 +68,7 @@ class LatestArticlesView(generics.ListAPIView):
         return (
             Article.objects
             .select_related('category', 'author', 'edition')
-            .filter(edition__status='COMPLETED')
+            .filter(edition__status='COMPLETED', status=ArticleStatus.PUBLISHED)
             .order_by('-created_at')
         )
 
@@ -80,6 +86,7 @@ class CategoryArticlesView(generics.ListAPIView):
             .select_related('category', 'author', 'edition')
             .filter(
                 edition__status='COMPLETED',
+                status=ArticleStatus.PUBLISHED,
                 category__name__iexact=category_name,
             )
             .order_by('-created_at')
@@ -97,7 +104,7 @@ class SearchArticlesView(generics.ListAPIView):
         qs = (
             Article.objects
             .select_related('category', 'author', 'edition')
-            .filter(edition__status='COMPLETED')
+            .filter(edition__status='COMPLETED', status=ArticleStatus.PUBLISHED)
         )
         if q:
             qs = qs.filter(
@@ -113,7 +120,13 @@ class SearchArticlesView(generics.ListAPIView):
 def public_categories(request):
     """All categories for navigation chips."""
     categories = Category.objects.annotate(
-        article_count=Count('articles', filter=Q(articles__edition__status='COMPLETED'))
+        article_count=Count(
+            'articles',
+            filter=Q(
+                articles__edition__status='COMPLETED',
+                articles__status=ArticleStatus.PUBLISHED,
+            ),
+        )
     ).order_by('display_order')
     data = [
         {
@@ -129,13 +142,36 @@ def public_categories(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def public_article_detail(request, article_id):
+    """Fetch a single published article by its UUID."""
+    article = get_object_or_404(
+        Article.objects.select_related('category', 'author', 'edition'),
+        pk=article_id,
+        edition__status='COMPLETED',
+        status=ArticleStatus.PUBLISHED,
+    )
+    serializer = PublicArticleSerializer(article)
+    return Response(serializer.data)
+
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def top_journalists(request):
     """Top journalists by article count — for journalist highlights section."""
     from accounts.models import User, UserRole
     journalists = (
         User.objects
         .filter(role__in=[UserRole.JOURNALIST, UserRole.EDITOR])
-        .annotate(article_count=Count('articles'))
+        .annotate(
+            article_count=Count(
+                'articles',
+                filter=Q(
+                    articles__edition__status='COMPLETED',
+                    articles__status=ArticleStatus.PUBLISHED,
+                ),
+            )
+        )
         .order_by('-article_count')[:6]
     )
     data = [

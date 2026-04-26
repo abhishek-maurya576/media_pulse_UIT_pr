@@ -5,10 +5,12 @@ django-cors-headers>=4.3
 
 # Content processing
 weasyprint>=62
+playwright>=1.58
 Pillow>=10
 python-dateutil>=2.9
 markdown>=3.5
 pyyaml>=6.0
+bleach>=6.1
 
 # Production — Render deployment
 gunicorn>=22.0

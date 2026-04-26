@@ -2,7 +2,7 @@
 
 import uuid
 from django.conf import settings
-from django.db import models
+from django.db import models, IntegrityError
 from django.utils.text import slugify
 
 
@@ -62,14 +62,23 @@ class BlogPost(models.Model):
         return self.title[:80]
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            base_slug = slugify(self.title)[:300]
-            slug = base_slug
-            counter = 1
-            while BlogPost.objects.filter(slug=slug).exclude(pk=self.pk).exists():
-                slug = f'{base_slug}-{counter}'
-                counter += 1
-            self.slug = slug
         if not self.excerpt and self.content:
             self.excerpt = self.content[:200].strip()
-        super().save(*args, **kwargs)
+
+        if not self.slug:
+            base_slug = slugify(self.title)[:300] or 'post'
+            self.slug = base_slug
+
+        # Retry loop to handle slug collisions at the DB level
+        max_retries = 10
+        for attempt in range(max_retries):
+            try:
+                super().save(*args, **kwargs)
+                return
+            except IntegrityError:
+                if attempt == max_retries - 1:
+                    raise
+                base_slug = slugify(self.title)[:300] or 'post'
+                self.slug = f'{base_slug}-{attempt + 1}'
+                # On retry, force INSERT to avoid double-update issues
+                kwargs.pop('force_update', None)

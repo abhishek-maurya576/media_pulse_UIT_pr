@@ -51,7 +51,7 @@ def render_edition_pdf(edition, page_layouts) -> bytes:
     # Pre-encode all local media images as base64
     # Avoids Playwright local file security restrictions
     html_content = re.sub(
-        r'src="(/media/[^"]+)"',
+        r'src="(/?media/[^"]+)"',
         _img_to_base64,
         html_content,
     )
@@ -61,21 +61,23 @@ def render_edition_pdf(edition, page_layouts) -> bytes:
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.set_content(html_content, wait_until='networkidle')
+            try:
+                page = browser.new_page()
+                page.set_content(html_content, wait_until='networkidle')
 
-            pdf_bytes = page.pdf(
-                width=page_dimensions['width'],
-                height=page_dimensions['height'],
-                margin={
-                    'top': '0',
-                    'bottom': '0',
-                    'left': '0',
-                    'right': '0',
-                },
-                print_background=True,
-            )
-            browser.close()
+                pdf_bytes = page.pdf(
+                    width=page_dimensions['width'],
+                    height=page_dimensions['height'],
+                    margin={
+                        'top': '0',
+                        'bottom': '0',
+                        'left': '0',
+                        'right': '0',
+                    },
+                    print_background=True,
+                )
+            finally:
+                browser.close()
 
     except ImportError:
         raise RuntimeError(
@@ -89,7 +91,15 @@ def render_edition_pdf(edition, page_layouts) -> bytes:
 
 def save_pdf_to_edition(edition, pdf_bytes: bytes) -> str:
     """Save PDF bytes to the edition's generated_pdf field."""
-    filename = f"edition_{edition.edition_number}_{edition.publication_date}.pdf"
+    filename = f"edition_{edition.id}_{edition.publication_date}.pdf"
+    target_name = f"editions/pdfs/{filename}"
+    storage = edition.generated_pdf.storage
+
+    if edition.generated_pdf.name and storage.exists(edition.generated_pdf.name):
+        storage.delete(edition.generated_pdf.name)
+    elif storage.exists(target_name):
+        storage.delete(target_name)
+
     edition.generated_pdf.save(filename, ContentFile(pdf_bytes), save=True)
     return edition.generated_pdf.url
 
@@ -97,7 +107,7 @@ def save_pdf_to_edition(edition, pdf_bytes: bytes) -> str:
 def _img_to_base64(match):
     """Replace local media image src with base64 data URI."""
     rel_url = match.group(1)
-    rel_path = urllib.parse.unquote(rel_url.replace('/media/', '', 1))
+    rel_path = urllib.parse.unquote(rel_url.lstrip('/').replace('media/', '', 1))
     file_path = os.path.join(settings.MEDIA_ROOT, rel_path)
     try:
         with open(file_path, "rb") as image_file:

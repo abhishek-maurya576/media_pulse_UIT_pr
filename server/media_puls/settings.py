@@ -5,16 +5,19 @@ Falls back to dev defaults when env vars are absent.
 """
 
 import os
+import logging
 from pathlib import Path
 import dj_database_url
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ─── Core Settings ───────────────────────────────────────────
-SECRET_KEY = os.environ.get(
-    'SECRET_KEY',
-    'django-insecure-media-puls-dev-key-change-in-production',
-)
+SECRET_KEY = os.environ.get('SECRET_KEY', '')
+if not SECRET_KEY:
+    SECRET_KEY = 'django-insecure-media-puls-dev-key-change-in-production'
+    logger.warning('SECRET_KEY is not set — using insecure dev default. Set SECRET_KEY env var for production.')
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
@@ -154,6 +157,11 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 
+# ─── Security Headers (always active) ────────────────────────
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SESSION_COOKIE_HTTPONLY = True
+
 # ─── Security Hardening (production only) ────────────────────
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -164,3 +172,6 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS.copy()
+    # Override CORS in production — never allow all origins
+    CORS_ALLOW_ALL_ORIGINS = False
+

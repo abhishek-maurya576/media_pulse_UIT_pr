@@ -9,6 +9,9 @@ echo "==> Installing Python dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
+echo "==> Installing Playwright Chromium browser..."
+python -m playwright install chromium
+
 echo "==> Collecting static files..."
 python manage.py collectstatic --no-input
 

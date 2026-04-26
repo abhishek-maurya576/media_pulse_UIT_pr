@@ -100,9 +100,10 @@ export interface Article {
   headline: string;
   subheadline: string;
   byline: string;
-  content_raw: string;
+  content_raw?: string;
   content_parsed: string;
   content_format: string;
+  status: string;
   category: number | null;
   category_name?: string;
   priority: string;
@@ -128,6 +129,7 @@ export interface ArticleCreate {
   byline: string;
   content_raw: string;
   content_format: string;
+  status?: string;
   category: number | null;
   priority: string;
   highlights: string[];
@@ -237,7 +239,8 @@ export const editionApi = {
   create: (data: EditionCreate) => api.post<Edition>('/editions/', data).then(r => r.data),
   update: (id: string, data: Partial<EditionCreate>) => api.patch<Edition>(`/editions/${id}/`, data).then(r => r.data),
   delete: (id: string) => api.delete(`/editions/${id}/`),
-  generatePdf: (id: string) => api.post(`/editions/${id}/generate-pdf/`).then(r => r.data),
+  generatePdf: (id: string) => api.post<{ status: string; job_id: string; message: string }>(`/editions/${id}/generate-pdf/`).then(r => r.data),
+  pollPdfStatus: (id: string) => api.get<{ id: string; status: string; progress_percent: number; error_message: string; pdf_url?: string }>(`/editions/${id}/pdf-status/`).then(r => r.data),
   getArticles: (editionId: string) =>
     api.get<ArticleListItem[]>(`/editions/${editionId}/articles/`).then(r => r.data),
 };
@@ -260,6 +263,8 @@ export const articleApi = {
   },
   removeImage: (id: string) =>
     api.delete(`/articles/${id}/remove-image/`).then(r => r.data),
+  bulkReorder: (orders: { id: string; order: number }[]) =>
+    api.post('/articles/bulk-reorder/', { orders }).then(r => r.data),
 };
 
 // ─── Category API ───
@@ -312,6 +317,7 @@ export const publicApi = {
   search: (q: string, page?: number) =>
     api.get<PaginatedResponse<Article>>('/public/search/', { params: { q, page } }).then(r => r.data),
   journalists: () => api.get<Journalist[]>('/public/journalists/').then(r => r.data),
+  articleDetail: (id: string) => api.get<Article>(`/public/articles/${id}/`).then(r => r.data),
 };
 
 // ─── Admin Types ───

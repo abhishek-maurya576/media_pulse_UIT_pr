@@ -13,7 +13,28 @@ import re
 import markdown as md
 import yaml
 
+try:
+    import bleach
+except ImportError:  # Keeps local/dev environments running until requirements are installed.
+    bleach = None
+
 from editions.models import ContentFormat
+
+
+ALLOWED_HTML_TAGS = [
+    'p', 'br', 'strong', 'b', 'em', 'i', 'u',
+    'ul', 'ol', 'li', 'blockquote',
+    'h2', 'h3', 'h4', 'hr',
+    'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+]
+
+ALLOWED_HTML_ATTRIBUTES = {
+    'a': ['href', 'title'],
+    'th': ['colspan', 'rowspan'],
+    'td': ['colspan', 'rowspan'],
+}
+
+ALLOWED_HTML_PROTOCOLS = ['http', 'https', 'mailto']
 
 
 def parse_content(raw_content: str, content_format: str) -> str:
@@ -25,7 +46,7 @@ def parse_content(raw_content: str, content_format: str) -> str:
         ContentFormat.YAML: parse_yaml,
     }
     parser = parsers.get(content_format, parse_plaintext)
-    return parser(raw_content)
+    return sanitize_html(parser(raw_content))
 
 
 def parse_plaintext(text: str) -> str:
@@ -54,6 +75,47 @@ def parse_markdown(text: str) -> str:
 
     extensions = ['extra', 'smarty', 'nl2br']
     return md.markdown(text, extensions=extensions)
+
+
+def sanitize_html(html: str) -> str:
+    """Allow editorial markup while stripping executable HTML."""
+    if not html:
+        return ''
+
+    if bleach is not None:
+        return bleach.clean(
+            html,
+            tags=ALLOWED_HTML_TAGS,
+            attributes=ALLOWED_HTML_ATTRIBUTES,
+            protocols=ALLOWED_HTML_PROTOCOLS,
+            strip=True,
+        )
+
+    cleaned = re.sub(
+        r'<\s*(script|style|iframe|object|embed)[^>]*>.*?<\s*/\s*\1\s*>',
+        '',
+        html,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    cleaned = re.sub(
+        r'<\s*/?\s*(script|style|iframe|object|embed|form|input|button)[^>]*>',
+        '',
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r'\son\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)',
+        '',
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r'\s(href|src)\s*=\s*("[^"]*javascript:[^"]*"|\'[^\']*javascript:[^\']*\')',
+        '',
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    return cleaned
 
 
 def parse_json(text: str) -> str:

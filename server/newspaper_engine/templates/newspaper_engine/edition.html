@@ -1,22 +1,31 @@
 <!DOCTYPE html>
 <html lang="hi">
+
 <head>
   <meta charset="UTF-8">
   <title>बी. आर. टाइम्स — Edition #{{ edition.edition_number }}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Amita:wght@400;700&family=Ranga:wght@400;700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Amita:wght@400;700&family=Ranga:wght@400;700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
+    rel="stylesheet">
   <style>
     @page {
       size: {{ page_dim.width }} {{ page_dim.height }};
       margin: 0;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     /* ═══════════════════════════════════════════════════════ */
     /* ─── STYLE PRESET VARIABLES ─── */
     /* ═══════════════════════════════════════════════════════ */
     {% if edition.style_preset == 'CLASSIC' %}
+
     :root {
       --np-accent: #8B0000;
       --np-accent-light: #A52A2A;
@@ -36,7 +45,9 @@
       --np-column-rule-color: #999;
       --np-drop-cap-color: #8B0000;
     }
+
     {% elif edition.style_preset == 'MODERN' %}
+
     :root {
       --np-accent: #E63946;
       --np-accent-light: #F07167;
@@ -56,7 +67,9 @@
       --np-column-rule-color: #ddd;
       --np-drop-cap-color: #E63946;
     }
+
     {% else %}
+
     :root {
       --np-accent: #C1121F;
       --np-accent-light: #D4443E;
@@ -76,6 +89,7 @@
       --np-column-rule-color: #bbb;
       --np-drop-cap-color: #000;
     }
+
     {% endif %}
 
     body {
@@ -98,8 +112,9 @@
       position: relative;
       background: #fff;
     }
+
     /* Page break BEFORE each page (except first) prevents blank trailing pages */
-    .newspaper-page + .newspaper-page {
+    .newspaper-page+.newspaper-page {
       page-break-before: always;
     }
 
@@ -111,6 +126,7 @@
       margin-bottom: 5pt;
       border-top: var(--np-masthead-border);
     }
+
     /* Top row: RNI info + sidebar */
     .masthead-top-row {
       display: flex;
@@ -118,9 +134,11 @@
       align-items: flex-start;
       margin-top: 2pt;
     }
+
     .masthead-left-info {
       flex: 1;
     }
+
     .masthead-left-info .city-line {
       font-family: 'Amita', serif;
       font-size: 7.5pt;
@@ -128,17 +146,20 @@
       color: #000;
       margin-bottom: 0;
     }
+
     .masthead-left-info .rni-line {
       font-family: 'Amita', serif;
       font-size: 6pt;
       color: #333;
     }
+
     .masthead-left-info .tagline {
       font-family: 'Amita', serif;
       font-size: 6.5pt;
       color: #333;
       margin-top: 1pt;
     }
+
     /* Right sidebar box */
     .masthead-sidebar {
       width: 160pt;
@@ -151,12 +172,14 @@
       text-align: left;
       flex-shrink: 0;
     }
+
     .masthead-sidebar .sidebar-title {
       font-weight: 700;
       font-size: 6pt;
       text-align: center;
       margin-bottom: 2pt;
     }
+
     /* Main title */
     .masthead-name {
       font-family: 'Ranga', cursive;
@@ -168,6 +191,7 @@
       margin: 2pt 0 1pt;
       letter-spacing: 2pt;
     }
+
     /* Bottom info row */
     .masthead-bottom-row {
       display: flex;
@@ -179,16 +203,19 @@
       color: #000;
       padding: 1pt 0;
     }
+
     .masthead-rule {
       height: 2pt;
       background: #000;
       margin-top: 2pt;
     }
+
     .masthead-thin-rule {
       height: 0.4pt;
       background: #000;
       margin-top: 1.5pt;
     }
+
     /* Date bar */
     .masthead-date-bar {
       display: flex;
@@ -218,6 +245,7 @@
       border-bottom: 0.4pt solid #999;
       margin-bottom: 5pt;
     }
+
     .page-category-label {
       font-family: 'Amita', serif;
       font-size: 12pt;
@@ -237,6 +265,7 @@
       padding-bottom: 5pt;
       border-bottom: 1.5pt solid #000;
     }
+
     .hero-section::after {
       content: "";
       display: block;
@@ -250,7 +279,11 @@
       column-gap: 12pt;
       width: 100%;
     }
-    .column { position: relative; }
+
+    .column {
+      position: relative;
+    }
+
     .column:not(:first-child)::before {
       content: '';
       position: absolute;
@@ -262,13 +295,19 @@
     }
 
     /* ─── Multi-Column Span ─── */
-    .span-2 { grid-column: span 2; }
-    .span-3 { grid-column: span 3; }
+    .span-2 {
+      grid-column: span 2;
+    }
+
+    .span-3 {
+      grid-column: span 3;
+    }
 
     /* ─── Full-width single article: CSS multi-column flow ─── */
     .full-width-flow {
       width: 100%;
     }
+
     .article-multi-col {
       column-count: 3;
       column-gap: 12pt;
@@ -286,15 +325,18 @@
       break-inside: auto;
       page-break-inside: auto;
     }
+
     .article-block:last-child {
       border-bottom: none;
       margin-bottom: 0;
     }
+
     .article-block::after {
       content: "";
       display: block;
       clear: both;
     }
+
     /* Keep headlines glued to their content — never orphan a headline */
     .article-headline {
       break-after: avoid;
@@ -319,10 +361,23 @@
       color: var(--np-text);
       letter-spacing: var(--np-headline-tracking);
     }
-    .headline-hero    { font-size: 24pt; margin-bottom: 3pt; }
-    .headline-major   { font-size: 15pt; }
-    .headline-standard { font-size: 12pt; }
-    .headline-minor   { font-size: 10pt; }
+
+    .headline-hero {
+      font-size: 24pt;
+      margin-bottom: 3pt;
+    }
+
+    .headline-major {
+      font-size: 15pt;
+    }
+
+    .headline-standard {
+      font-size: 12pt;
+    }
+
+    .headline-minor {
+      font-size: 10pt;
+    }
 
     /* ─── Subheadline ─── */
     .article-subheadline {
@@ -353,15 +408,18 @@
       line-height: var(--np-body-leading);
       color: var(--np-text);
     }
+
     .article-content::after {
       content: "";
       display: block;
       clear: both;
     }
+
     .article-content p {
       margin-bottom: 3pt;
       text-indent: 1em;
     }
+
     .article-content p:first-child {
       text-indent: 0;
     }
@@ -392,6 +450,7 @@
       width: 100%;
       margin-bottom: 4pt;
     }
+
     .article-image-block img {
       width: 100%;
       height: auto;
@@ -403,11 +462,13 @@
       width: 40%;
       margin: 0 0 6pt 8pt;
     }
+
     .article-image-float-left {
       float: left;
       width: 40%;
       margin: 0 8pt 6pt 0;
     }
+
     .article-image-float-right img,
     .article-image-float-left img {
       width: 100%;
@@ -427,6 +488,7 @@
     .hero-content-columns .article-image-float-left {
       margin-bottom: 6pt;
     }
+
     .hero-content-columns .article-image-float-right img,
     .hero-content-columns .article-image-float-left img {
       width: 100%;
@@ -443,19 +505,23 @@
       line-height: 1.22;
       break-inside: avoid;
     }
+
     .highlights-float-left {
       float: left;
       width: 45%;
       margin: 0 8pt 5pt 0;
     }
+
     .highlights-float-right {
       float: right;
       width: 45%;
       margin: 0 0 5pt 8pt;
     }
+
     .highlights-block {
       margin: 3pt 0;
     }
+
     .highlights-box h4 {
       font-family: 'Amita', serif;
       font-size: 6pt;
@@ -463,8 +529,15 @@
       color: var(--np-accent);
       font-weight: 700;
     }
-    .highlights-box ul { padding-left: 10pt; color: #222; }
-    .highlights-box li { margin-bottom: 1pt; }
+
+    .highlights-box ul {
+      padding-left: 10pt;
+      color: #222;
+    }
+
+    .highlights-box li {
+      margin-bottom: 1pt;
+    }
 
     /* ─── Continuation Markers ─── */
     .continuation-marker {
@@ -477,6 +550,7 @@
       font-weight: 700;
       clear: both;
     }
+
     .continued-from {
       font-family: 'Amita', serif;
       font-size: 6.5pt;
@@ -521,6 +595,7 @@
       break-inside: avoid;
       page-break-inside: avoid;
     }
+
     .editorial-board .eb-title {
       font-size: 12pt;
       font-weight: 700;
@@ -529,38 +604,45 @@
       padding-bottom: 3pt;
       margin-bottom: 4pt;
     }
+
     .editorial-board .eb-role {
       font-weight: 700;
       font-size: 7pt;
       text-align: center;
       margin-top: 3pt;
     }
+
     .editorial-board .eb-name {
       text-align: center;
       font-size: 7pt;
     }
+
     .editorial-board .eb-section {
       margin-top: 5pt;
       padding-top: 3pt;
       border-top: 0.5pt solid #999;
     }
+
     .editorial-board .eb-section-title {
       font-weight: 700;
       font-size: 7.5pt;
       text-align: center;
       margin-bottom: 2pt;
     }
+
     .editorial-board .eb-address {
       font-size: 6pt;
       line-height: 1.3;
       margin-top: 4pt;
     }
+
     .editorial-board .eb-contact {
       font-size: 6.5pt;
       margin-top: 2pt;
     }
   </style>
 </head>
+
 <body>
 
   {% for page in pages %}
@@ -650,21 +732,21 @@
 
       <div class="article-content hero-content-columns drop-cap-block">
         {% if hero.article.image %}
-          {% if hero.image_wrap_mode == 'float' %}
-            <div class="article-image-float-{{ hero.image_float }}" style="width: {{ hero.image_width_pct }}%;">
-              <img src="{{ hero.article.image.url }}" alt="{{ hero.article.headline }}">
-              {% if hero.article.image_caption %}
-              <div class="article-image-caption">{{ hero.article.image_caption }}</div>
-              {% endif %}
-            </div>
-          {% else %}
-            <div class="article-image-block">
-              <img src="{{ hero.article.image.url }}" alt="{{ hero.article.headline }}">
-              {% if hero.article.image_caption %}
-              <div class="article-image-caption">{{ hero.article.image_caption }}</div>
-              {% endif %}
-            </div>
+        {% if hero.image_wrap_mode == 'float' %}
+        <div class="article-image-float-{{ hero.image_float }}" style="width: {{ hero.image_width_pct }}%;">
+          <img src="{{ hero.article.image.url }}" alt="{{ hero.article.headline }}">
+          {% if hero.article.image_caption %}
+          <div class="article-image-caption">{{ hero.article.image_caption }}</div>
           {% endif %}
+        </div>
+        {% else %}
+        <div class="article-image-block">
+          <img src="{{ hero.article.image.url }}" alt="{{ hero.article.headline }}">
+          {% if hero.article.image_caption %}
+          <div class="article-image-caption">{{ hero.article.image_caption }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
         {% endif %}
         {{ hero.content_html|safe }}
       </div>
@@ -684,9 +766,9 @@
     <article class="article-block full-width-flow">
 
       {% if not item.is_continuation %}
-        {% if item.article.category %}
-        <div class="category-tag">{{ item.article.category.name }}</div>
-        {% endif %}
+      {% if item.article.category %}
+      <div class="category-tag">{{ item.article.category.name }}</div>
+      {% endif %}
       {% endif %}
 
       {% if not item.is_continuation %}
@@ -703,24 +785,24 @@
 
       {# ─── IMAGE ─── #}
       {% if not item.is_continuation and item.article.image %}
-        <div class="article-image-float-right">
-          <img src="{{ item.article.image.url }}" alt="{{ item.article.headline }}">
-          {% if item.article.image_caption %}
-          <div class="article-image-caption">{{ item.article.image_caption }}</div>
-          {% endif %}
-        </div>
+      <div class="article-image-float-right">
+        <img src="{{ item.article.image.url }}" alt="{{ item.article.headline }}">
+        {% if item.article.image_caption %}
+        <div class="article-image-caption">{{ item.article.image_caption }}</div>
+        {% endif %}
+      </div>
       {% endif %}
 
       {# ─── HIGHLIGHTS ─── #}
       {% if not item.is_continuation and item.article.highlights %}
-        <div class="highlights-box highlights-float-left">
-          <h4>मुख्य बिंदु</h4>
-          <ul>
-            {% for highlight in item.article.highlights %}
-            <li>{{ highlight }}</li>
-            {% endfor %}
-          </ul>
-        </div>
+      <div class="highlights-box highlights-float-left">
+        <h4>मुख्य बिंदु</h4>
+        <ul>
+          {% for highlight in item.article.highlights %}
+          <li>{{ highlight }}</li>
+          {% endfor %}
+        </ul>
+      </div>
       {% endif %}
 
       {# ─── BODY CONTENT with CSS columns ─── #}
@@ -746,9 +828,9 @@
           {% endif %}
 
           {% if not item.is_continuation %}
-            {% if item.article.category %}
-            <div class="category-tag">{{ item.article.category.name }}</div>
-            {% endif %}
+          {% if item.article.category %}
+          <div class="category-tag">{{ item.article.category.name }}</div>
+          {% endif %}
           {% endif %}
 
           {% if not item.is_continuation %}
@@ -765,44 +847,44 @@
 
           {# ─── IMAGE with float wrapping ─── #}
           {% if not item.is_continuation and item.article.image %}
-            {% if item.image_wrap_mode == 'float' %}
-              <div class="article-image-float-{{ item.image_float }}">
-                <img src="{{ item.article.image.url }}" alt="{{ item.article.headline }}">
-                {% if item.article.image_caption %}
-                <div class="article-image-caption">{{ item.article.image_caption }}</div>
-                {% endif %}
-              </div>
-            {% else %}
-              <div class="article-image-block">
-                <img src="{{ item.article.image.url }}" alt="{{ item.article.headline }}">
-                {% if item.article.image_caption %}
-                <div class="article-image-caption">{{ item.article.image_caption }}</div>
-                {% endif %}
-              </div>
+          {% if item.image_wrap_mode == 'float' %}
+          <div class="article-image-float-{{ item.image_float }}">
+            <img src="{{ item.article.image.url }}" alt="{{ item.article.headline }}">
+            {% if item.article.image_caption %}
+            <div class="article-image-caption">{{ item.article.image_caption }}</div>
             {% endif %}
+          </div>
+          {% else %}
+          <div class="article-image-block">
+            <img src="{{ item.article.image.url }}" alt="{{ item.article.headline }}">
+            {% if item.article.image_caption %}
+            <div class="article-image-caption">{{ item.article.image_caption }}</div>
+            {% endif %}
+          </div>
+          {% endif %}
           {% endif %}
 
           {# ─── HIGHLIGHTS ─── #}
           {% if not item.is_continuation and item.article.highlights %}
-            {% if item.highlight_float != 'none' %}
-              <div class="highlights-box highlights-float-{{ item.highlight_float }}">
-                <h4>मुख्य बिंदु</h4>
-                <ul>
-                  {% for highlight in item.article.highlights %}
-                  <li>{{ highlight }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-            {% else %}
-              <div class="highlights-box highlights-block">
-                <h4>मुख्य बिंदु</h4>
-                <ul>
-                  {% for highlight in item.article.highlights %}
-                  <li>{{ highlight }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-            {% endif %}
+          {% if item.highlight_float != 'none' %}
+          <div class="highlights-box highlights-float-{{ item.highlight_float }}">
+            <h4>मुख्य बिंदु</h4>
+            <ul>
+              {% for highlight in item.article.highlights %}
+              <li>{{ highlight }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% else %}
+          <div class="highlights-box highlights-block">
+            <h4>मुख्य बिंदु</h4>
+            <ul>
+              {% for highlight in item.article.highlights %}
+              <li>{{ highlight }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
           {% endif %}
 
           {# ─── BODY CONTENT ─── #}
@@ -889,4 +971,5 @@
   {% endfor %}
 
 </body>
+
 </html>

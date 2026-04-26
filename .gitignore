@@ -22,6 +22,7 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+server/db.sqlite3
 
 # Node (for client/)
 node_modules/

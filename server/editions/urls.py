@@ -27,4 +27,5 @@ urlpatterns = [
     path('public/category/<str:category_name>/', public_views.CategoryArticlesView.as_view(), name='public-category'),
     path('public/search/', public_views.SearchArticlesView.as_view(), name='public-search'),
     path('public/journalists/', public_views.top_journalists, name='public-journalists'),
+    path('public/articles/<uuid:article_id>/', public_views.public_article_detail, name='public-article-detail'),
 ]

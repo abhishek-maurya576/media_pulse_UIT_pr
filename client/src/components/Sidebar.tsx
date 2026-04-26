@@ -27,7 +27,7 @@ const navItems = [
   { path: '/dashboard/articles', label: 'Articles', icon: FileText, minRole: 'JOURNALIST' },
   { path: '/dashboard/blog', label: 'Blog Posts', icon: Newspaper, minRole: 'JOURNALIST' },
   { path: '/dashboard/categories', label: 'Categories', icon: FolderOpen, minRole: 'EDITOR' },
-  { path: '/dashboard/templates', label: 'Templates', icon: LayoutTemplate, minRole: 'EDITOR' },
+  { path: '/dashboard/templates', label: 'Templates', icon: LayoutTemplate, minRole: 'ADMIN' },
   { path: '/dashboard/users', label: 'Users', icon: Users, minRole: 'ADMIN' },
   { path: '/dashboard/media', label: 'Media Library', icon: Image, minRole: 'JOURNALIST' },
   { path: '/dashboard/settings', label: 'Settings', icon: Settings, minRole: 'ADMIN' },

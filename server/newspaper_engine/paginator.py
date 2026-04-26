@@ -189,13 +189,13 @@ def _try_split_overflow(
                 article, available, col_width, overhead,
             )
 
+            # Keep the first fragment — it carries the headline/image
+            # and should be placed on the current or next page.
+            if first_frag is not None:
+                unsplit.append(first_frag)
+
             if second_frag is not None:
                 continuations.append(second_frag)
-                # first_frag was already partially handled or can be discarded
-                # since article already didn't fit on current page
-            else:
-                # Couldn't split — move whole article
-                unsplit.append(article)
         else:
             # Article too small to split — just move to next page
             unsplit.append(article)

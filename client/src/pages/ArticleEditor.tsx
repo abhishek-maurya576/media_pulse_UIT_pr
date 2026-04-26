@@ -84,7 +84,7 @@ export default function ArticleEditor() {
         headline: existingArticle.headline,
         subheadline: existingArticle.subheadline,
         byline: existingArticle.byline,
-        content_raw: existingArticle.content_raw,
+        content_raw: existingArticle.content_raw || '',
         content_format: existingArticle.content_format,
         category: existingArticle.category,
         priority: existingArticle.priority,

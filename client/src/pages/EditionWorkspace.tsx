@@ -231,11 +231,15 @@ export default function EditionWorkspace() {
     // Optimistic update
     queryClient.setQueryData(['edition-articles', editionId], reordered);
 
-    // Update order on server
-    reordered.forEach((article, index) => {
-      if (article.order !== index + 1) {
-        articleApi.update(article.id, { order: index + 1 } as any).catch(() => {});
-      }
+    // Build bulk order payload and send single request
+    const orders = reordered.map((article, index) => ({
+      id: article.id,
+      order: index + 1,
+    }));
+
+    articleApi.bulkReorder(orders).catch(() => {
+      // Revert optimistic update on failure
+      queryClient.invalidateQueries({ queryKey: ['edition-articles', editionId] });
     });
   };
 

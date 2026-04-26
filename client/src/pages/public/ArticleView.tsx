@@ -1,5 +1,6 @@
 /**
  * ArticleView — Public article detail page.
+ * Fetches the article directly from the backend by UUID.
  */
 
 import React from 'react';
@@ -11,17 +12,29 @@ import { CONFIG } from '../../config';
 export default function ArticleView() {
   const { articleId } = useParams<{ articleId: string }>();
 
-  // Use the trending/latest endpoints to find the article since we don't have a public single-article endpoint by ID
-  // For now, we'll use the articles from the featured/latest data
-  const { data: latestData } = useQuery({
-    queryKey: ['public-latest'],
-    queryFn: () => publicApi.latest(1),
+  const { data: article, isLoading, isError } = useQuery({
+    queryKey: ['public-article', articleId],
+    queryFn: () => publicApi.articleDetail(articleId!),
+    enabled: !!articleId,
   });
 
-  const articles = latestData?.results ?? [];
-  const article = articles.find((a: Article) => a.id === articleId);
+  if (isLoading) {
+    return (
+      <div style={{
+        maxWidth: 800,
+        margin: '60px auto',
+        padding: '0 24px',
+        textAlign: 'center',
+      }}>
+        <div className="spinner" style={{ margin: '0 auto 16px' }} />
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+          Loading article...
+        </p>
+      </div>
+    );
+  }
 
-  if (!article) {
+  if (isError || !article) {
     return (
       <div style={{
         maxWidth: 800,
@@ -35,10 +48,10 @@ export default function ArticleView() {
           color: 'var(--color-text)',
           marginBottom: 12,
         }}>
-          Article Loading...
+          Article Not Found
         </h1>
         <p style={{ color: 'var(--color-text-muted)' }}>
-          If this persists, the article may not be available.
+          This article may have been removed or is not yet published.
         </p>
         <Link to="/" style={{
           display: 'inline-block',
@@ -174,7 +187,7 @@ export default function ArticleView() {
           fontFamily: CONFIG.typography.bodyFont,
         }}
         dangerouslySetInnerHTML={{
-          __html: article.content_parsed || article.content_raw?.replace(/\n/g, '<br/>') || '',
+          __html: article.content_parsed || '',
         }}
       />
 

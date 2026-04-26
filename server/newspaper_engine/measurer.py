@@ -17,6 +17,9 @@ from typing import Optional
 
 from newspaper_engine import config
 
+# Devanagari characters are wider than Latin; apply width multiplier
+DEVANAGARI_WIDTH_FACTOR = 1.30
+
 
 @dataclass
 class ArticleMeasurement:
@@ -128,7 +131,8 @@ def _measure_text_block(
 ) -> float:
     if not text:
         return 0.0
-    chars_per_line = max(1, int(column_width * chars_per_pt))
+    effective_width = column_width * _script_width_factor(text)
+    chars_per_line = max(1, int(effective_width * chars_per_pt))
     num_lines = math.ceil(len(text) / chars_per_line)
     line_height_pt = font_size * line_height_ratio
     return num_lines * line_height_pt
@@ -194,8 +198,10 @@ def _measure_body_content(html_content: str, column_width: float) -> float:
     words = clean.split()
     word_count = len(words)
 
-    avg_word_width_pt = config.BODY_FONT_SIZE * 0.45
-    words_per_line = max(1, int(column_width / (avg_word_width_pt * 5)))
+    # Compute average word length for this content to get accurate wrapping
+    avg_word_len = sum(len(w) for w in words) / max(1, word_count)
+    avg_word_width_pt = config.BODY_FONT_SIZE * 0.45 * _script_width_factor(clean)
+    words_per_line = max(1, int(column_width / (avg_word_width_pt * max(avg_word_len, 3))))
 
     num_lines = math.ceil(word_count / words_per_line)
 
@@ -206,6 +212,28 @@ def _measure_body_content(html_content: str, column_width: float) -> float:
     total_height += (num_lines * line_height_pt) + paragraph_spacing
 
     return total_height
+
+
+def _script_width_factor(text: str) -> float:
+    """Return inverse width factor based on script detection.
+
+    Devanagari glyphs are ~30% wider than Latin at the same font-size,
+    so fewer characters fit per line.  We return a factor < 1.0 to
+    *reduce* the effective column width used for line-count estimation,
+    which results in *more* estimated lines (conservative).
+    """
+    if not text:
+        return 1.0
+    # Sample up to 200 characters for performance
+    sample = text[:200]
+    devanagari_count = sum(
+        1 for ch in sample
+        if '\u0900' <= ch <= '\u097F'  # Devanagari Unicode block
+    )
+    ratio = devanagari_count / max(len(sample), 1)
+    if ratio > 0.3:
+        return 1.0 / DEVANAGARI_WIDTH_FACTOR  # ~0.77 — fewer chars per line
+    return 1.0
 
 
 def _measure_image(article, column_width: float, is_hero: bool) -> float:

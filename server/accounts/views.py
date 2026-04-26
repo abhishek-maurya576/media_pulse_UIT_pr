@@ -210,7 +210,10 @@ def admin_user_list(request):
         return Response({'error': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
 
     if request.method == 'GET':
-        queryset = User.objects.all().select_related('created_by')
+        queryset = User.objects.all().select_related('created_by').annotate(
+            article_count=Count('articles', distinct=True),
+            blog_count=Count('blog_posts', distinct=True),
+        )
 
         # Filters
         role = request.query_params.get('role')

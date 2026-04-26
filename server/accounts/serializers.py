@@ -193,8 +193,8 @@ class ChangePasswordSerializer(serializers.Serializer):
 class AdminUserListSerializer(serializers.ModelSerializer):
     """Expanded user list for admin management."""
     created_by_name = serializers.SerializerMethodField()
-    article_count = serializers.SerializerMethodField()
-    blog_count = serializers.SerializerMethodField()
+    article_count = serializers.IntegerField(read_only=True)
+    blog_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
@@ -211,18 +211,12 @@ class AdminUserListSerializer(serializers.ModelSerializer):
             return obj.created_by.get_full_name() or obj.created_by.username
         return None
 
-    def get_article_count(self, obj):
-        return obj.articles.count()
-
-    def get_blog_count(self, obj):
-        return obj.blog_posts.count()
-
 
 class AdminUserDetailSerializer(serializers.ModelSerializer):
     """Full user detail for admin view."""
     created_by_name = serializers.SerializerMethodField()
-    article_count = serializers.SerializerMethodField()
-    blog_count = serializers.SerializerMethodField()
+    article_count = serializers.IntegerField(read_only=True)
+    blog_count = serializers.IntegerField(read_only=True)
     follower_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
     published_blog_count = serializers.SerializerMethodField()
@@ -243,12 +237,6 @@ class AdminUserDetailSerializer(serializers.ModelSerializer):
         if obj.created_by:
             return obj.created_by.get_full_name() or obj.created_by.username
         return None
-
-    def get_article_count(self, obj):
-        return obj.articles.count()
-
-    def get_blog_count(self, obj):
-        return obj.blog_posts.count()
 
     def get_published_blog_count(self, obj):
         return obj.blog_posts.filter(status='PUBLISHED').count()

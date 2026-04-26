@@ -20,7 +20,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'edition', 'author', 'author_name',
             'headline', 'subheadline', 'byline',
-            'content_raw', 'content_format', 'content_parsed',
+            'content_raw', 'content_format', 'content_parsed', 'status',
             'category', 'category_name', 'priority',
             'highlights', 'highlights_mode',
             'image', 'image_caption', 'order',
@@ -48,7 +48,7 @@ class ArticleListSerializer(serializers.ModelSerializer):
         model = Article
         fields = [
             'id', 'headline', 'subheadline', 'byline',
-            'content_format', 'category', 'category_name',
+            'content_format', 'status', 'category', 'category_name',
             'priority', 'highlights_mode', 'order',
             'author', 'author_name', 'edit_remark',
             'created_at',
